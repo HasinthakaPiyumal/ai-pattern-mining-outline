@@ -1,0 +1,181 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        
+            
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/dist/vis-network.min.css" integrity="sha512-WgxfT5LWjfszlPHXRmBWHkV2eceiWTOBvrKCNbdgDYTHrT2AeLCGbF4sZlZw3UMN3WtL0tGUoIAKsu8mllg/XA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js" integrity="sha512-LnvoEWDFrqGHlHmDD2101OrLcbsfkrzoSpvtSQtxK3RMnRV0eOkhhBN2dXHKRrUU8p2DGRTk35n4O8nWSVe1mQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+        
+<center>
+<h1></h1>
+</center>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6"
+          crossorigin="anonymous"
+        />
+        <script
+          src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
+          crossorigin="anonymous"
+        ></script>
+
+
+        <center>
+          <h1></h1>
+        </center>
+        <style type="text/css">
+
+             #mynetwork {
+                 width: 100%;
+                 height: 100vh;
+                 background-color: #FFFFFF;
+                 border: 1px solid lightgray;
+                 position: relative;
+                 float: left;
+             }
+
+             
+
+             
+             #config {
+                 float: left;
+                 width: 400px;
+                 height: 600px;
+             }
+             
+
+             
+        </style>
+    </head>
+
+
+    <body>
+        <div class="card" style="width: 100%">
+            
+            
+            <div id="mynetwork" class="card-body"></div>
+        </div>
+
+        
+        
+            <div id="config"></div>
+        
+
+        <script type="text/javascript">
+
+              // initialize global variables.
+              var edges;
+              var nodes;
+              var allNodes;
+              var allEdges;
+              var nodeColors;
+              var originalNodes;
+              var network;
+              var container;
+              var options, data;
+              var filter = {
+                  item : '',
+                  property : '',
+                  value : []
+              };
+
+              
+
+              
+
+              // This method is responsible for drawing the graph, returns the drawn network
+              function drawGraph() {
+                  var container = document.getElementById('mynetwork');
+
+                  
+
+                  // parsing and collecting nodes and edges from the python
+                  nodes = new vis.DataSet([{"color": "#EF476F", "font": {"color": "black"}, "id": "encoder/train_encoder.py:\u003cmodule\u003e", "label": "\u003cmodule\u003e", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e encoder/train_encoder.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e \u003cmodule\u003e"}, {"color": "#EF476F", "font": {"color": "black"}, "id": "encoder/train_encoder.py:main", "label": "main", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e encoder/train_encoder.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e main"}, {"color": "#06D6A0", "font": {"color": "black"}, "id": "encoder/trainer/tuner.py:Tuner.next_model", "label": "Tuner.next_model", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e encoder/trainer/tuner.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e Tuner.next_model"}, {"color": "#118AB2", "font": {"color": "black"}, "id": "encoder/trainer/trainer.py:init_seed", "label": "init_seed", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e encoder/trainer/trainer.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e init_seed"}, {"color": "#FFD166", "font": {"color": "black"}, "id": "encoder/trainer/logger.py:Logger.__init__", "label": "Logger.__init__", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e encoder/trainer/logger.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e Logger.__init__"}, {"color": "#FFD166", "font": {"color": "black"}, "id": "encoder/trainer/logger.py:get_local_time", "label": "get_local_time", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e encoder/trainer/logger.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e get_local_time"}, {"color": "#073B4C", "font": {"color": "black"}, "id": "encoder/config/configurator.py:\u003cmodule\u003e", "label": "\u003cmodule\u003e", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e encoder/config/configurator.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e \u003cmodule\u003e"}, {"color": "#073B4C", "font": {"color": "black"}, "id": "encoder/config/configurator.py:parse_configure", "label": "parse_configure", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e encoder/config/configurator.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e parse_configure"}, {"color": "#9B5DE5", "font": {"color": "black"}, "id": "encoder/models/general_cf/lightgcn_plus.py:LightGCN_plus.cal_loss", "label": "LightGCN_plus.cal_loss", "shape": "dot", "size": 18, "title": "\u003cb\u003eFile:\u003c/b\u003e encoder/models/general_cf/lightgcn_plus.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e LightGCN_plus.cal_loss"}, {"color": "#F15BB5", "font": {"color": "black"}, "id": "encoder/models/loss_utils.py:cal_bpr_loss", "label": "cal_bpr_loss", "shape": "dot", "size": 42, "title": "\u003cb\u003eFile:\u003c/b\u003e encoder/models/loss_utils.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e cal_bpr_loss"}, {"color": "#F15BB5", "font": {"color": "black"}, "id": "encoder/models/loss_utils.py:reg_params", "label": "reg_params", "shape": "dot", "size": 48, "title": "\u003cb\u003eFile:\u003c/b\u003e encoder/models/loss_utils.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e reg_params"}, {"color": "#F15BB5", "font": {"color": "black"}, "id": "encoder/models/loss_utils.py:cal_infonce_loss", "label": "cal_infonce_loss", "shape": "dot", "size": 38, "title": "\u003cb\u003eFile:\u003c/b\u003e encoder/models/loss_utils.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e cal_infonce_loss"}, {"color": "#00BBF9", "font": {"color": "black"}, "id": "encoder/models/general_cf/sgl_plus.py:SGL_plus.cal_loss", "label": "SGL_plus.cal_loss", "shape": "dot", "size": 18, "title": "\u003cb\u003eFile:\u003c/b\u003e encoder/models/general_cf/sgl_plus.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e SGL_plus.cal_loss"}, {"color": "#00F5D4", "font": {"color": "black"}, "id": "encoder/models/general_cf/lightgcn.py:LightGCN.cal_loss", "label": "LightGCN.cal_loss", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e encoder/models/general_cf/lightgcn.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e LightGCN.cal_loss"}, {"color": "#FEE440", "font": {"color": "black"}, "id": "encoder/models/general_cf/dccf_gene.py:DCCF_gene._cal_cl_loss", "label": "DCCF_gene._cal_cl_loss", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e encoder/models/general_cf/dccf_gene.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e DCCF_gene._cal_cl_loss"}, {"color": "#FEE440", "font": {"color": "black"}, "id": "encoder/models/general_cf/dccf_gene.py:DCCF_gene._reconstruction", "label": "DCCF_gene._reconstruction", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e encoder/models/general_cf/dccf_gene.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e DCCF_gene._reconstruction"}, {"color": "#F15BB5", "font": {"color": "black"}, "id": "encoder/models/loss_utils.py:ssl_con_loss", "label": "ssl_con_loss", "shape": "dot", "size": 24, "title": "\u003cb\u003eFile:\u003c/b\u003e encoder/models/loss_utils.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e ssl_con_loss"}, {"color": "#FEE440", "font": {"color": "black"}, "id": "encoder/models/general_cf/dccf_gene.py:DCCF_gene.cal_loss", "label": "DCCF_gene.cal_loss", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e encoder/models/general_cf/dccf_gene.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e DCCF_gene.cal_loss"}, {"color": "#FF7D00", "font": {"color": "black"}, "id": "encoder/models/general_cf/lightgcn_gene.py:LightGCN_gene._reconstruction", "label": "LightGCN_gene._reconstruction", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e encoder/models/general_cf/lightgcn_gene.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e LightGCN_gene._reconstruction"}, {"color": "#FF7D00", "font": {"color": "black"}, "id": "encoder/models/general_cf/lightgcn_gene.py:LightGCN_gene.cal_loss", "label": "LightGCN_gene.cal_loss", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e encoder/models/general_cf/lightgcn_gene.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e LightGCN_gene.cal_loss"}, {"color": "#FF006E", "font": {"color": "black"}, "id": "encoder/models/general_cf/simgcl.py:SimGCL.cal_loss", "label": "SimGCL.cal_loss", "shape": "dot", "size": 18, "title": "\u003cb\u003eFile:\u003c/b\u003e encoder/models/general_cf/simgcl.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e SimGCL.cal_loss"}, {"color": "#EF476F", "font": {"color": "black"}, "id": "encoder/models/general_cf/autocf_gene.py:AutoCF_gene._reconstruction", "label": "AutoCF_gene._reconstruction", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e encoder/models/general_cf/autocf_gene.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e AutoCF_gene._reconstruction"}, {"color": "#EF476F", "font": {"color": "black"}, "id": "encoder/models/general_cf/autocf_gene.py:AutoCF_gene.cal_loss", "label": "AutoCF_gene.cal_loss", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e encoder/models/general_cf/autocf_gene.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e AutoCF_gene.cal_loss"}, {"color": "#06D6A0", "font": {"color": "black"}, "id": "encoder/models/general_cf/dccf_plus.py:DCCF_plus._cal_cl_loss", "label": "DCCF_plus._cal_cl_loss", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e encoder/models/general_cf/dccf_plus.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e DCCF_plus._cal_cl_loss"}, {"color": "#06D6A0", "font": {"color": "black"}, "id": "encoder/models/general_cf/dccf_plus.py:DCCF_plus.cal_loss", "label": "DCCF_plus.cal_loss", "shape": "dot", "size": 18, "title": "\u003cb\u003eFile:\u003c/b\u003e encoder/models/general_cf/dccf_plus.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e DCCF_plus.cal_loss"}, {"color": "#118AB2", "font": {"color": "black"}, "id": "encoder/models/general_cf/sgl.py:SGL.cal_loss", "label": "SGL.cal_loss", "shape": "dot", "size": 18, "title": "\u003cb\u003eFile:\u003c/b\u003e encoder/models/general_cf/sgl.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e SGL.cal_loss"}, {"color": "#FFD166", "font": {"color": "black"}, "id": "encoder/models/general_cf/gccf_gene.py:GCCF_gene._reconstruction", "label": "GCCF_gene._reconstruction", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e encoder/models/general_cf/gccf_gene.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e GCCF_gene._reconstruction"}, {"color": "#FFD166", "font": {"color": "black"}, "id": "encoder/models/general_cf/gccf_gene.py:GCCF_gene.cal_loss", "label": "GCCF_gene.cal_loss", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e encoder/models/general_cf/gccf_gene.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e GCCF_gene.cal_loss"}, {"color": "#073B4C", "font": {"color": "black"}, "id": "encoder/models/general_cf/gccf.py:GCCF.cal_loss", "label": "GCCF.cal_loss", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e encoder/models/general_cf/gccf.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e GCCF.cal_loss"}, {"color": "#9B5DE5", "font": {"color": "black"}, "id": "encoder/models/general_cf/autocf.py:AutoCF.cal_loss", "label": "AutoCF.cal_loss", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e encoder/models/general_cf/autocf.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e AutoCF.cal_loss"}, {"color": "#F15BB5", "font": {"color": "black"}, "id": "encoder/models/general_cf/dccf.py:DCCF._cal_cl_loss", "label": "DCCF._cal_cl_loss", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e encoder/models/general_cf/dccf.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e DCCF._cal_cl_loss"}, {"color": "#F15BB5", "font": {"color": "black"}, "id": "encoder/models/general_cf/dccf.py:DCCF.cal_loss", "label": "DCCF.cal_loss", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e encoder/models/general_cf/dccf.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e DCCF.cal_loss"}, {"color": "#00BBF9", "font": {"color": "black"}, "id": "encoder/models/general_cf/sgl_gene.py:SGL_gene._reconstruction", "label": "SGL_gene._reconstruction", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e encoder/models/general_cf/sgl_gene.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e SGL_gene._reconstruction"}, {"color": "#00BBF9", "font": {"color": "black"}, "id": "encoder/models/general_cf/sgl_gene.py:SGL_gene.cal_loss", "label": "SGL_gene.cal_loss", "shape": "dot", "size": 18, "title": "\u003cb\u003eFile:\u003c/b\u003e encoder/models/general_cf/sgl_gene.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e SGL_gene.cal_loss"}, {"color": "#00F5D4", "font": {"color": "black"}, "id": "encoder/models/general_cf/autocf_plus.py:AutoCF_plus.cal_loss", "label": "AutoCF_plus.cal_loss", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e encoder/models/general_cf/autocf_plus.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e AutoCF_plus.cal_loss"}, {"color": "#FEE440", "font": {"color": "black"}, "id": "encoder/models/general_cf/gccf_plus.py:GCCF_plus.cal_loss", "label": "GCCF_plus.cal_loss", "shape": "dot", "size": 18, "title": "\u003cb\u003eFile:\u003c/b\u003e encoder/models/general_cf/gccf_plus.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e GCCF_plus.cal_loss"}, {"color": "#FF7D00", "font": {"color": "black"}, "id": "encoder/models/general_cf/simgcl_gene.py:SimGCL_gene._reconstruction", "label": "SimGCL_gene._reconstruction", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e encoder/models/general_cf/simgcl_gene.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e SimGCL_gene._reconstruction"}, {"color": "#FF7D00", "font": {"color": "black"}, "id": "encoder/models/general_cf/simgcl_gene.py:SimGCL_gene.cal_loss", "label": "SimGCL_gene.cal_loss", "shape": "dot", "size": 18, "title": "\u003cb\u003eFile:\u003c/b\u003e encoder/models/general_cf/simgcl_gene.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e SimGCL_gene.cal_loss"}, {"color": "#FF006E", "font": {"color": "black"}, "id": "encoder/models/general_cf/simgcl_plus.py:SimGCL_plus.cal_loss", "label": "SimGCL_plus.cal_loss", "shape": "dot", "size": 18, "title": "\u003cb\u003eFile:\u003c/b\u003e encoder/models/general_cf/simgcl_plus.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e SimGCL_plus.cal_loss"}, {"color": "#EF476F", "font": {"color": "black"}, "id": "generation/item/generate_profile.py:\u003cmodule\u003e", "label": "\u003cmodule\u003e", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e generation/item/generate_profile.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e \u003cmodule\u003e"}, {"color": "#EF476F", "font": {"color": "black"}, "id": "generation/item/generate_profile.py:get_gpt_response_w_system", "label": "get_gpt_response_w_system", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e generation/item/generate_profile.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e get_gpt_response_w_system"}, {"color": "#06D6A0", "font": {"color": "black"}, "id": "generation/emb/generate_emb.py:\u003cmodule\u003e", "label": "\u003cmodule\u003e", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e generation/emb/generate_emb.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e \u003cmodule\u003e"}, {"color": "#06D6A0", "font": {"color": "black"}, "id": "generation/emb/generate_emb.py:get_gpt_emb", "label": "get_gpt_emb", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e generation/emb/generate_emb.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e get_gpt_emb"}, {"color": "#118AB2", "font": {"color": "black"}, "id": "generation/user/generate_profile.py:\u003cmodule\u003e", "label": "\u003cmodule\u003e", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e generation/user/generate_profile.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e \u003cmodule\u003e"}]);
+                  edges = new vis.DataSet([{"arrows": "to", "color": "#666666", "from": "encoder/train_encoder.py:\u003cmodule\u003e", "to": "encoder/train_encoder.py:main", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "encoder/trainer/tuner.py:Tuner.next_model", "to": "encoder/trainer/trainer.py:init_seed", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "encoder/trainer/logger.py:Logger.__init__", "to": "encoder/trainer/logger.py:get_local_time", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "encoder/config/configurator.py:\u003cmodule\u003e", "to": "encoder/config/configurator.py:parse_configure", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "encoder/models/general_cf/lightgcn_plus.py:LightGCN_plus.cal_loss", "to": "encoder/models/loss_utils.py:cal_bpr_loss", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "encoder/models/general_cf/lightgcn_plus.py:LightGCN_plus.cal_loss", "to": "encoder/models/loss_utils.py:reg_params", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "encoder/models/general_cf/lightgcn_plus.py:LightGCN_plus.cal_loss", "to": "encoder/models/loss_utils.py:cal_infonce_loss", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "encoder/models/general_cf/sgl_plus.py:SGL_plus.cal_loss", "to": "encoder/models/loss_utils.py:cal_bpr_loss", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "encoder/models/general_cf/sgl_plus.py:SGL_plus.cal_loss", "to": "encoder/models/loss_utils.py:cal_infonce_loss", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "encoder/models/general_cf/sgl_plus.py:SGL_plus.cal_loss", "to": "encoder/models/loss_utils.py:reg_params", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "encoder/models/general_cf/lightgcn.py:LightGCN.cal_loss", "to": "encoder/models/loss_utils.py:cal_bpr_loss", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "encoder/models/general_cf/lightgcn.py:LightGCN.cal_loss", "to": "encoder/models/loss_utils.py:reg_params", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "encoder/models/general_cf/dccf_gene.py:DCCF_gene._cal_cl_loss", "to": "encoder/models/loss_utils.py:cal_infonce_loss", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "encoder/models/general_cf/dccf_gene.py:DCCF_gene._reconstruction", "to": "encoder/models/loss_utils.py:ssl_con_loss", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "encoder/models/general_cf/dccf_gene.py:DCCF_gene.cal_loss", "to": "encoder/models/loss_utils.py:cal_bpr_loss", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "encoder/models/general_cf/dccf_gene.py:DCCF_gene.cal_loss", "to": "encoder/models/loss_utils.py:reg_params", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "encoder/models/general_cf/lightgcn_gene.py:LightGCN_gene._reconstruction", "to": "encoder/models/loss_utils.py:ssl_con_loss", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "encoder/models/general_cf/lightgcn_gene.py:LightGCN_gene.cal_loss", "to": "encoder/models/loss_utils.py:cal_bpr_loss", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "encoder/models/general_cf/lightgcn_gene.py:LightGCN_gene.cal_loss", "to": "encoder/models/loss_utils.py:reg_params", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "encoder/models/general_cf/simgcl.py:SimGCL.cal_loss", "to": "encoder/models/loss_utils.py:cal_bpr_loss", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "encoder/models/general_cf/simgcl.py:SimGCL.cal_loss", "to": "encoder/models/loss_utils.py:cal_infonce_loss", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "encoder/models/general_cf/simgcl.py:SimGCL.cal_loss", "to": "encoder/models/loss_utils.py:reg_params", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "encoder/models/general_cf/autocf_gene.py:AutoCF_gene._reconstruction", "to": "encoder/models/loss_utils.py:ssl_con_loss", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "encoder/models/general_cf/autocf_gene.py:AutoCF_gene.cal_loss", "to": "encoder/models/loss_utils.py:reg_params", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "encoder/models/general_cf/dccf_plus.py:DCCF_plus._cal_cl_loss", "to": "encoder/models/loss_utils.py:cal_infonce_loss", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "encoder/models/general_cf/dccf_plus.py:DCCF_plus.cal_loss", "to": "encoder/models/loss_utils.py:cal_bpr_loss", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "encoder/models/general_cf/dccf_plus.py:DCCF_plus.cal_loss", "to": "encoder/models/loss_utils.py:reg_params", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "encoder/models/general_cf/dccf_plus.py:DCCF_plus.cal_loss", "to": "encoder/models/loss_utils.py:cal_infonce_loss", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "encoder/models/general_cf/sgl.py:SGL.cal_loss", "to": "encoder/models/loss_utils.py:cal_bpr_loss", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "encoder/models/general_cf/sgl.py:SGL.cal_loss", "to": "encoder/models/loss_utils.py:cal_infonce_loss", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "encoder/models/general_cf/sgl.py:SGL.cal_loss", "to": "encoder/models/loss_utils.py:reg_params", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "encoder/models/general_cf/gccf_gene.py:GCCF_gene._reconstruction", "to": "encoder/models/loss_utils.py:ssl_con_loss", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "encoder/models/general_cf/gccf_gene.py:GCCF_gene.cal_loss", "to": "encoder/models/loss_utils.py:cal_bpr_loss", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "encoder/models/general_cf/gccf_gene.py:GCCF_gene.cal_loss", "to": "encoder/models/loss_utils.py:reg_params", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "encoder/models/general_cf/gccf.py:GCCF.cal_loss", "to": "encoder/models/loss_utils.py:cal_bpr_loss", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "encoder/models/general_cf/gccf.py:GCCF.cal_loss", "to": "encoder/models/loss_utils.py:reg_params", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "encoder/models/general_cf/autocf.py:AutoCF.cal_loss", "to": "encoder/models/loss_utils.py:reg_params", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "encoder/models/general_cf/dccf.py:DCCF._cal_cl_loss", "to": "encoder/models/loss_utils.py:cal_infonce_loss", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "encoder/models/general_cf/dccf.py:DCCF.cal_loss", "to": "encoder/models/loss_utils.py:cal_bpr_loss", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "encoder/models/general_cf/dccf.py:DCCF.cal_loss", "to": "encoder/models/loss_utils.py:reg_params", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "encoder/models/general_cf/sgl_gene.py:SGL_gene._reconstruction", "to": "encoder/models/loss_utils.py:ssl_con_loss", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "encoder/models/general_cf/sgl_gene.py:SGL_gene.cal_loss", "to": "encoder/models/loss_utils.py:cal_bpr_loss", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "encoder/models/general_cf/sgl_gene.py:SGL_gene.cal_loss", "to": "encoder/models/loss_utils.py:cal_infonce_loss", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "encoder/models/general_cf/sgl_gene.py:SGL_gene.cal_loss", "to": "encoder/models/loss_utils.py:reg_params", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "encoder/models/general_cf/autocf_plus.py:AutoCF_plus.cal_loss", "to": "encoder/models/loss_utils.py:reg_params", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "encoder/models/general_cf/autocf_plus.py:AutoCF_plus.cal_loss", "to": "encoder/models/loss_utils.py:cal_infonce_loss", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "encoder/models/general_cf/gccf_plus.py:GCCF_plus.cal_loss", "to": "encoder/models/loss_utils.py:cal_bpr_loss", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "encoder/models/general_cf/gccf_plus.py:GCCF_plus.cal_loss", "to": "encoder/models/loss_utils.py:reg_params", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "encoder/models/general_cf/gccf_plus.py:GCCF_plus.cal_loss", "to": "encoder/models/loss_utils.py:cal_infonce_loss", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "encoder/models/general_cf/simgcl_gene.py:SimGCL_gene._reconstruction", "to": "encoder/models/loss_utils.py:ssl_con_loss", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "encoder/models/general_cf/simgcl_gene.py:SimGCL_gene.cal_loss", "to": "encoder/models/loss_utils.py:cal_bpr_loss", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "encoder/models/general_cf/simgcl_gene.py:SimGCL_gene.cal_loss", "to": "encoder/models/loss_utils.py:cal_infonce_loss", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "encoder/models/general_cf/simgcl_gene.py:SimGCL_gene.cal_loss", "to": "encoder/models/loss_utils.py:reg_params", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "encoder/models/general_cf/simgcl_plus.py:SimGCL_plus.cal_loss", "to": "encoder/models/loss_utils.py:cal_bpr_loss", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "encoder/models/general_cf/simgcl_plus.py:SimGCL_plus.cal_loss", "to": "encoder/models/loss_utils.py:cal_infonce_loss", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "encoder/models/general_cf/simgcl_plus.py:SimGCL_plus.cal_loss", "to": "encoder/models/loss_utils.py:reg_params", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "generation/item/generate_profile.py:\u003cmodule\u003e", "to": "generation/item/generate_profile.py:get_gpt_response_w_system", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "generation/emb/generate_emb.py:\u003cmodule\u003e", "to": "generation/emb/generate_emb.py:get_gpt_emb", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "generation/user/generate_profile.py:\u003cmodule\u003e", "to": "generation/item/generate_profile.py:get_gpt_response_w_system", "width": 1.4}]);
+
+                  nodeColors = {};
+                  allNodes = nodes.get({ returnType: "Object" });
+                  for (nodeId in allNodes) {
+                    nodeColors[nodeId] = allNodes[nodeId].color;
+                  }
+                  allEdges = edges.get({ returnType: "Object" });
+                  // adding nodes and edges to the graph
+                  data = {nodes: nodes, edges: edges};
+
+                  var options = {
+    "configure": {
+        "enabled": true,
+        "filter": [
+            "physics"
+        ]
+    },
+    "edges": {
+        "color": {
+            "inherit": true
+        },
+        "smooth": {
+            "enabled": true,
+            "type": "dynamic"
+        }
+    },
+    "interaction": {
+        "dragNodes": true,
+        "hideEdgesOnDrag": false,
+        "hideNodesOnDrag": false
+    },
+    "physics": {
+        "barnesHut": {
+            "avoidOverlap": 0,
+            "centralGravity": 0.25,
+            "damping": 0.09,
+            "gravitationalConstant": -5000,
+            "springConstant": 0.02,
+            "springLength": 150
+        },
+        "enabled": true,
+        "stabilization": {
+            "enabled": true,
+            "fit": true,
+            "iterations": 1000,
+            "onlyDynamicEdges": false,
+            "updateInterval": 50
+        }
+    }
+};
+
+                  
+
+
+                  
+                  // if this network requires displaying the configure window,
+                  // put it in its div
+                  options.configure["container"] = document.getElementById("config");
+                  
+
+                  network = new vis.Network(container, data, options);
+
+                  
+
+                  
+
+                  
+
+
+                  
+
+                  return network;
+
+              }
+              drawGraph();
+        </script>
+    
+<script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+
+</body>
+</html>

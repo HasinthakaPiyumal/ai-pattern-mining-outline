@@ -1,0 +1,519 @@
+# Cluster 27
+
+def produce_scattertext_html(term_doc_matrix, category, category_name, not_category_name, protocol='https', minimum_term_frequency=DEFAULT_MINIMUM_TERM_FREQUENCY, pmi_threshold_coefficient=DEFAULT_PMI_THRESHOLD_COEFFICIENT, max_terms=None, filter_unigrams=False, height_in_pixels=None, width_in_pixels=None, term_ranker=termranking.AbsoluteFrequencyRanker):
+    """Returns html code of visualization.
+
+    Parameters
+    ----------
+    term_doc_matrix : TermDocMatrix
+        Corpus to use
+    category : str
+        name of category column
+    category_name: str
+        name of category to mine for
+    not_category_name: str
+        name of everything that isn't in category
+    protocol : str
+        optional, used prototcol of , http or https
+    minimum_term_frequency : int, optional
+        Minimum number of times word needs to appear to make it into visualization.
+    pmi_threshold_coefficient : int, optional
+        Filter out bigrams with a PMI of < 2 * pmi_threshold_coefficient. Default is 6.
+    max_terms : int, optional
+        Maximum number of terms to include in visualization.
+    filter_unigrams : bool
+        default False, do we filter unigrams that only occur in one bigram
+    width_in_pixels: int
+        width of viz in pixels, if None, default to JS's choice
+    height_in_pixels: int
+        height of viz in pixels, if None, default to JS's choice
+    term_ranker : TermRanker
+        TermRanker class for determining term frequency ranks.
+
+    Returns
+    -------
+        str, html of visualization
+    """
+    scatter_chart_data = ScatterChart(term_doc_matrix=term_doc_matrix, minimum_term_frequency=minimum_term_frequency, pmi_threshold_coefficient=pmi_threshold_coefficient, filter_unigrams=filter_unigrams, max_terms=max_terms, term_ranker=term_ranker).to_dict(category=category, category_name=category_name, not_category_name=not_category_name, transform=percentile_alphabetical)
+    scatterplot_structure = ScatterplotStructure(VizDataAdapter(scatter_chart_data), width_in_pixels, height_in_pixels)
+    return BasicHTMLFromScatterplotStructure(scatterplot_structure).to_html(protocol=protocol)
+
+class TestHTMLVisualizationAssembly(TestCase):
+
+    def get_params(self, param_dict={}):
+        params = ['1000', '600', 'null', 'null', 'true', 'false', 'false', 'false', 'false', 'true', 'false', 'false', 'true', '0.1', 'false', 'undefined', 'undefined', 'getDataAndInfo()', 'true', 'false', 'null', 'null', 'null', 'null', 'true', 'false', 'true', 'false', 'null', 'null', '10', 'null', 'null', 'null', 'false', 'true', 'true', '"' + DEFAULT_DIV_ID + '"', 'null', 'false', 'false', '"' + DEFAULT_D3_AXIS_VALUE_FORMAT + '"', '"' + DEFAULT_D3_AXIS_VALUE_FORMAT + '"', 'false', '-1', 'true', 'false', 'true', 'false', 'false', 'false', 'true', 'null', 'null', 'null', 'false', 'null', 'undefined', 'undefined', 'undefined', 'undefined', 'undefined', 'undefined', 'undefined', '14', '0', 'null', '"Term"', 'true', 'false', 'false', 'undefined', 'null', '"document"', '"documents"', 'null', 'false', 'null', 'null', 'null', 'null', 'null', 'null', 'false']
+        for i, val in param_dict.items():
+            params[i] = val
+        return 'buildViz(' + ',\n'.join(params) + ');\n'
+
+    def make_assembler(self):
+        scatterplot_structure = ScatterplotStructure(self.make_adapter())
+        return BasicHTMLFromScatterplotStructure(scatterplot_structure)
+
+    def make_adapter(self):
+        words_dict = {'info': {'not_category_name': 'Republican', 'category_name': 'Democratic'}, 'data': [{'y': 0.33763837638376387, 'term': 'crises', 'ncat25k': 0, 'cat25k': 1, 'x': 0.0, 's': 0.878755930416447}, {'y': 0.5, 'term': 'something else', 'ncat25k': 0, 'cat25k': 1, 'x': 0.0, 's': 0.5}]}
+        visualization_data = VizDataAdapter(words_dict)
+        return visualization_data
+
+    def test_main(self):
+        assembler = self.make_assembler()
+        html = assembler.to_html()
+        if sys.version_info.major == 2:
+            self.assertEqual(type(html), unicode)
+        else:
+            self.assertEqual(type(html), str)
+        self.assertFalse('<!-- EXTRA LIBS -->' in html)
+        self.assertFalse('<!-- INSERT SCRIPT -->' in html)
+        self.assertTrue('<!-- INSERT SEMIOTIC SQUARE -->' in html)
+        self.assertTrue('Republican' in html)
+
+    def test_semiotic_square(self):
+        semsq = get_test_semiotic_square()
+        assembler = self.make_assembler()
+        html = assembler.to_html(html_base=HTMLSemioticSquareViz(semsq).get_html(num_terms=6))
+        if sys.version_info.major == 2:
+            self.assertEqual(type(html), unicode)
+        else:
+            self.assertEqual(type(html), str)
+        self.assertFalse('<!-- EXTRA LIBS -->' in html)
+        self.assertFalse('<!-- INSERT SCRIPT -->' in html)
+        self.assertTrue('Republican' in html)
+
+    def test_save_svg_button(self):
+        scatterplot_structure = ScatterplotStructure(self.make_adapter(), save_svg_button=True)
+        assembly = BasicHTMLFromScatterplotStructure(scatterplot_structure)
+        html = assembly.to_html()
+        self.assertEqual(scatterplot_structure.call_build_visualization_in_javascript(), self.get_params({11: 'true'}))
+        self.assertFalse('<!-- INSERT SCRIPT -->' in html)
+
+    def test_protocol_is_https(self):
+        html = self.make_assembler().to_html(protocol='https')
+        self.assertTrue(self._https_script_is_present(html))
+        self.assertFalse(self._http_script_is_present(html))
+
+    def _test_protocol_is_http(self):
+        html = self.make_assembler().to_html(protocol='http')
+        self.assertFalse(self._https_script_is_present(html))
+        self.assertTrue(self._http_script_is_present(html))
+
+    def _http_script_is_present(self, html):
+        return 'src="http://' in html
+
+    def _https_script_is_present(self, html):
+        return 'src="https://' in html
+
+    def test_protocol_default_d3_url(self):
+        html = self.make_assembler().to_html()
+        self.assertTrue(DEFAULT_D3_URL in html)
+        html = self.make_assembler().to_html(d3_url='d3.js')
+        self.assertTrue(DEFAULT_D3_URL not in html)
+        self.assertTrue('d3.js' in html)
+
+    def test_protocol_default_d3_chromatic_url(self):
+        html = self.make_assembler().to_html()
+        self.assertTrue(DEFAULT_D3_SCALE_CHROMATIC in html)
+        html = self.make_assembler().to_html(d3_scale_chromatic_url='d3-scale-chromatic.v1.min.js')
+        self.assertTrue(DEFAULT_D3_SCALE_CHROMATIC not in html)
+        self.assertTrue('d3-scale-chromatic.v1.min.js' in html)
+
+    def test_protocol_defaults_to_http(self):
+        self.assertEqual(self.make_assembler().to_html(protocol='http'), self.make_assembler().to_html())
+
+    def test_raise_invalid_protocol_exception(self):
+        with self.assertRaisesRegexp(BaseException, 'Invalid protocol: ftp.  Protocol must be either http or https.'):
+            self.make_assembler().to_html(protocol='ftp')
+
+    def test_height_width_default(self):
+        scatterplot_structure = ScatterplotStructure(self.make_adapter())
+        self.assertEqual(scatterplot_structure.call_build_visualization_in_javascript(), self.get_params())
+
+    def test_color(self):
+        visualization_data = self.make_adapter()
+        self.assertEqual(ScatterplotStructure(visualization_data, color='d3.interpolatePurples').call_build_visualization_in_javascript(), self.get_params({3: 'd3.interpolatePurples'}))
+
+    def test_full_doc(self):
+        visualization_data = self.make_adapter()
+        self.assertEqual(ScatterplotStructure(visualization_data, use_full_doc=True).call_build_visualization_in_javascript(), self.get_params({5: 'true'}))
+
+    def test_grey_zero_scores(self):
+        visualization_data = self.make_adapter()
+        self.assertEqual(ScatterplotStructure(visualization_data, grey_zero_scores=True).call_build_visualization_in_javascript(), self.get_params({6: 'true'}))
+
+    def test_chinese_mode(self):
+        visualization_data = self.make_adapter()
+        self.assertEqual(ScatterplotStructure(visualization_data, asian_mode=True).call_build_visualization_in_javascript(), self.get_params({7: 'true'}))
+
+    def test_reverse_sort_scores_for_not_category(self):
+        visualization_data = self.make_adapter()
+        self.assertEqual(ScatterplotStructure(visualization_data, reverse_sort_scores_for_not_category=False).call_build_visualization_in_javascript(), self.get_params({12: 'false'}))
+
+    def test_height_width_nondefault(self):
+        visualization_data = self.make_adapter()
+        self.assertEqual(ScatterplotStructure(visualization_data, width_in_pixels=1000).call_build_visualization_in_javascript(), self.get_params({0: '1000'}))
+        self.assertEqual(ScatterplotStructure(visualization_data, height_in_pixels=60).call_build_visualization_in_javascript(), self.get_params({1: '60'}))
+        self.assertEqual(ScatterplotStructure(visualization_data, width_in_pixels=1000, height_in_pixels=60).call_build_visualization_in_javascript(), self.get_params({0: '1000', 1: '60'}))
+
+    def test_use_non_text_features(self):
+        visualization_data = self.make_adapter()
+        self.assertEqual(ScatterplotStructure(visualization_data, width_in_pixels=1000, height_in_pixels=60, use_non_text_features=True).call_build_visualization_in_javascript(), self.get_params({0: '1000', 1: '60', 8: 'true'}))
+
+    def test_show_characteristic(self):
+        visualization_data = self.make_adapter()
+        self.assertEqual(ScatterplotStructure(visualization_data, width_in_pixels=1000, height_in_pixels=60, show_characteristic=False).call_build_visualization_in_javascript(), self.get_params({0: '1000', 1: '60', 9: 'false'}))
+
+    def test_max_snippets(self):
+        visualization_data = self.make_adapter()
+        self.assertEqual(ScatterplotStructure(visualization_data, width_in_pixels=1000, height_in_pixels=60, max_snippets=None).call_build_visualization_in_javascript(), self.get_params({0: '1000', 1: '60'}))
+        self.assertEqual(ScatterplotStructure(visualization_data, width_in_pixels=1000, height_in_pixels=60, max_snippets=100).call_build_visualization_in_javascript(), self.get_params({0: '1000', 1: '60', 2: '100'}))
+
+    def test_word_vec_use_p_vals(self):
+        visualization_data = self.make_adapter()
+        self.assertEqual(ScatterplotStructure(visualization_data, width_in_pixels=1000, height_in_pixels=60, word_vec_use_p_vals=True).call_build_visualization_in_javascript(), self.get_params({0: '1000', 1: '60', 10: 'true'}))
+
+    def test_max_p_val(self):
+        visualization_data = self.make_adapter()
+        self.assertEqual(ScatterplotStructure(visualization_data, width_in_pixels=1000, height_in_pixels=60, word_vec_use_p_vals=True, max_p_val=0.01).call_build_visualization_in_javascript(), self.get_params({0: '1000', 1: '60', 10: 'true', 13: '0.01'}))
+
+    def test_p_value_colors(self):
+        visualization_data = self.make_adapter()
+        self.assertEqual(ScatterplotStructure(visualization_data, width_in_pixels=1000, height_in_pixels=60, word_vec_use_p_vals=True, p_value_colors=True).call_build_visualization_in_javascript(), self.get_params({0: '1000', 1: '60', 10: 'true', 14: 'true'}))
+
+    def test_x_label(self):
+        visualization_data = self.make_adapter()
+        self.assertEqual(ScatterplotStructure(visualization_data, width_in_pixels=1000, height_in_pixels=60, x_label='x label').call_build_visualization_in_javascript(), self.get_params({0: '1000', 1: '60', 15: '"x label"'}))
+
+    def test_y_label(self):
+        visualization_data = self.make_adapter()
+        self.assertEqual(ScatterplotStructure(visualization_data, width_in_pixels=1000, height_in_pixels=60, y_label='y label').call_build_visualization_in_javascript(), self.get_params({0: '1000', 1: '60', 16: '"y label"'}))
+
+    def test_full_data(self):
+        visualization_data = self.make_adapter()
+        full_data = 'customFullDataFunction()'
+        self.assertEqual(ScatterplotStructure(visualization_data, full_data=full_data).call_build_visualization_in_javascript(), self.get_params({17: full_data}))
+
+    def test_show_top_terms(self):
+        visualization_data = self.make_adapter()
+        self.assertEqual(ScatterplotStructure(visualization_data, show_top_terms=False).call_build_visualization_in_javascript(), self.get_params({18: 'false'}))
+        visualization_data = self.make_adapter()
+        self.assertEqual(ScatterplotStructure(visualization_data, show_top_terms=True).call_build_visualization_in_javascript(), self.get_params({18: 'true'}))
+        self.assertEqual(ScatterplotStructure(visualization_data).call_build_visualization_in_javascript(), self.get_params({18: 'true'}))
+
+    def test_show_neutral(self):
+        visualization_data = self.make_adapter()
+        self.assertEqual(ScatterplotStructure(visualization_data).call_build_visualization_in_javascript(), self.get_params({19: 'false'}))
+        self.assertEqual(ScatterplotStructure(visualization_data, show_neutral=True).call_build_visualization_in_javascript(), self.get_params({19: 'true'}))
+
+    def test_get_tooltip_content(self):
+        visualization_data = self.make_adapter()
+        f = "(function(x) {return 'Original X: ' + x.ox;})"
+        self.assertEqual(ScatterplotStructure(visualization_data, get_tooltip_content=f).call_build_visualization_in_javascript(), self.get_params({20: f}))
+
+    def test_x_axis_labels(self):
+        visualization_data = self.make_adapter()
+        self.assertEqual(ScatterplotStructure(visualization_data, x_axis_values=[1, 2, 3]).call_build_visualization_in_javascript(), self.get_params({21: '[1, 2, 3]'}))
+
+    def test_y_axis_labels(self):
+        visualization_data = self.make_adapter()
+        self.assertEqual(ScatterplotStructure(visualization_data, y_axis_values=[4, 5, 6]).call_build_visualization_in_javascript(), self.get_params({22: '[4, 5, 6]'}))
+
+    def test_color_func(self):
+        visualization_data = self.make_adapter()
+        color_func = 'function colorFunc(d) {var c = d3.hsl(d3.interpolateRdYlBu(d.x)); c.s *= d.y;\treturn c;}'
+        self.assertEqual(ScatterplotStructure(visualization_data, color_func=color_func).call_build_visualization_in_javascript(), self.get_params({23: color_func}))
+
+    def test_show_axes(self):
+        visualization_data = self.make_adapter()
+        self.assertEqual(ScatterplotStructure(visualization_data, show_axes=False).call_build_visualization_in_javascript(), self.get_params({24: 'false'}))
+
+    def test_show_extra(self):
+        visualization_data = self.make_adapter()
+        self.assertEqual(ScatterplotStructure(visualization_data, show_extra=True).call_build_visualization_in_javascript(), self.get_params({25: 'true'}))
+
+    def test_do_censor_points(self):
+        visualization_data = self.make_adapter()
+        self.assertEqual(ScatterplotStructure(visualization_data, do_censor_points=False).call_build_visualization_in_javascript(), self.get_params({26: 'false'}))
+
+    def test_center_label_over_points(self):
+        visualization_data = self.make_adapter()
+        self.assertEqual(ScatterplotStructure(visualization_data, center_label_over_points=True).call_build_visualization_in_javascript(), self.get_params({27: 'true'}))
+
+    def test_x_axis_labels_over_points(self):
+        visualization_data = self.make_adapter()
+        self.assertEqual(ScatterplotStructure(visualization_data, x_axis_labels=['Lo', 'Hi']).call_build_visualization_in_javascript(), self.get_params({28: '["Lo", "Hi"]'}))
+
+    def test_y_axis_labels_over_points(self):
+        visualization_data = self.make_adapter()
+        self.assertEqual(ScatterplotStructure(visualization_data, y_axis_labels=['Lo', 'Hi']).call_build_visualization_in_javascript(), self.get_params({29: '["Lo", "Hi"]'}))
+
+    def test_topic_model_preview_size(self):
+        visualization_data = self.make_adapter()
+        self.assertEqual(ScatterplotStructure(visualization_data, topic_model_preview_size=20).call_build_visualization_in_javascript(), self.get_params({30: '20'}))
+
+    def test_vertical_lines(self):
+        visualization_data = self.make_adapter()
+        params = ScatterplotStructure(visualization_data, vertical_lines=[20, 31]).call_build_visualization_in_javascript()
+        self.assertEqual(params, self.get_params({31: '[20, 31]'}))
+
+    def test_horizontal_line_y_position(self):
+        visualization_data = self.make_adapter()
+        params = ScatterplotStructure(visualization_data, horizontal_line_y_position=0).call_build_visualization_in_javascript()
+        self.assertEqual(params, self.get_params({32: '0'}))
+
+    def test_vertical_line_x_position(self):
+        visualization_data = self.make_adapter()
+        params = ScatterplotStructure(visualization_data, vertical_line_x_position=3).call_build_visualization_in_javascript()
+        self.assertEqual(params, self.get_params({33: '3'}))
+
+    def test_unifed_context(self):
+        visualization_data = self.make_adapter()
+        params = ScatterplotStructure(visualization_data, unified_context=True).call_build_visualization_in_javascript()
+        self.assertEqual(params, self.get_params({34: 'true'}))
+
+    def test_show_category_headings(self):
+        visualization_data = self.make_adapter()
+        params = ScatterplotStructure(visualization_data, show_category_headings=False).call_build_visualization_in_javascript()
+        self.assertEqual(params, self.get_params({35: 'false'}))
+
+    def test_show_cross_axes(self):
+        visualization_data = self.make_adapter()
+        params = ScatterplotStructure(visualization_data, show_cross_axes=False).call_build_visualization_in_javascript()
+        self.assertEqual(params, self.get_params({36: 'false'}))
+
+    def test_div_name(self):
+        visualization_data = self.make_adapter()
+        params = ScatterplotStructure(visualization_data, div_name='divvydivvy').call_build_visualization_in_javascript()
+        self.assertEqual(params, self.get_params({37: '"divvydivvy"'}))
+
+    def test_alternative_term_func(self):
+        visualization_data = self.make_adapter()
+        params = ScatterplotStructure(visualization_data, alternative_term_func='(function(termDict) {return true;})').call_build_visualization_in_javascript()
+        self.assertEqual(params, self.get_params({38: '(function(termDict) {return true;})'}))
+
+    def test_include_all_contexts(self):
+        visualization_data = self.make_adapter()
+        params = ScatterplotStructure(visualization_data, include_all_contexts=True).call_build_visualization_in_javascript()
+        self.assertEqual(params, self.get_params({39: 'true'}))
+
+    def test_show_axes_and_cross_hairs(self):
+        visualization_data = self.make_adapter()
+        params = ScatterplotStructure(visualization_data, show_axes_and_cross_hairs=True).call_build_visualization_in_javascript()
+        self.assertEqual(params, self.get_params({40: 'true'}))
+
+    def test_x_axis_values_format(self):
+        visualization_data = self.make_adapter()
+        params = ScatterplotStructure(visualization_data, x_axis_values_format='.4f').call_build_visualization_in_javascript()
+        self.assertEqual(params, self.get_params({41: '".4f"'}))
+
+    def test_y_axis_values_format(self):
+        visualization_data = self.make_adapter()
+        params = ScatterplotStructure(visualization_data, y_axis_values_format='.5f').call_build_visualization_in_javascript()
+        self.assertEqual(params, self.get_params({42: '".5f"'}))
+
+    def test_match_full_line(self):
+        visualization_data = self.make_adapter()
+        params = ScatterplotStructure(visualization_data, match_full_line=True).call_build_visualization_in_javascript()
+        self.assertEqual(params, self.get_params({43: 'true'}))
+
+    def test_max_overlapping(self):
+        visualization_data = self.make_adapter()
+        params = ScatterplotStructure(visualization_data, max_overlapping=10).call_build_visualization_in_javascript()
+        self.assertEqual(params, self.get_params({44: '10'}))
+
+    def test_show_corpus_stats(self):
+        visualization_data = self.make_adapter()
+        params = ScatterplotStructure(visualization_data, show_corpus_stats=False).call_build_visualization_in_javascript()
+        self.assertEqual(params, self.get_params({45: 'false'}))
+
+    def test_sort_doc_labels_by_name(self):
+        visualization_data = self.make_adapter()
+        params = ScatterplotStructure(visualization_data, sort_doc_labels_by_name=True).call_build_visualization_in_javascript()
+        self.assertEqual(params, self.get_params({46: 'true'}))
+
+    def test_always_jump(self):
+        visualization_data = self.make_adapter()
+        params = ScatterplotStructure(visualization_data, always_jump=False).call_build_visualization_in_javascript()
+        self.assertEqual(params, self.get_params({47: 'false'}))
+
+    def test_highlight_selected_category(self):
+        visualization_data = self.make_adapter()
+        params = ScatterplotStructure(visualization_data, highlight_selected_category=True).call_build_visualization_in_javascript()
+        self.assertEqual(params, self.get_params({48: 'true'}))
+
+    def test_show_diagonal(self):
+        visualization_data = self.make_adapter()
+        params = ScatterplotStructure(visualization_data, show_diagonal=True).call_build_visualization_in_javascript()
+        self.assertEqual(params, self.get_params({49: 'true'}))
+
+    def test_use_global_scale(self):
+        visualization_data = self.make_adapter()
+        params = ScatterplotStructure(visualization_data, use_global_scale=True).call_build_visualization_in_javascript()
+        self.assertEqual(params, self.get_params({50: 'true'}))
+
+    def test_enable_term_category_description(self):
+        visualization_data = self.make_adapter()
+        params = ScatterplotStructure(visualization_data, enable_term_category_description=False).call_build_visualization_in_javascript()
+        self.assertEqual(params, self.get_params({51: 'false'}))
+
+    def test_get_custom_term_html(self):
+        visualization_data = self.make_adapter()
+        html = '(function(x) {return "Term: " + x.term})'
+        params = ScatterplotStructure(visualization_data, get_custom_term_html=html).call_build_visualization_in_javascript()
+        self.assertEqual(params, self.get_params({52: html}))
+
+    def test_header_names(self):
+        visualization_data = self.make_adapter()
+        header_names = {'upper': 'Upper Header Name', 'lower': 'Lower Header Name'}
+        params = ScatterplotStructure(visualization_data, header_names=header_names).call_build_visualization_in_javascript()
+        self.assertEqual(params, self.get_params({53: '{"upper": "Upper Header Name", "lower": "Lower Header Name"}'}))
+
+    def test_header_sorting_algos(self):
+        visualization_data = self.make_adapter()
+        header_sorting_algos = {'upper': '(function(a, b) {return b.s - a.s})', 'lower': '(function(a, b) {return a.s - b.s})'}
+        params = ScatterplotStructure(visualization_data, header_sorting_algos=header_sorting_algos).call_build_visualization_in_javascript()
+        self.assertEqual(params, self.get_params({54: '{"lower": (function(a, b) {return a.s - b.s}), "upper": (function(a, b) {return b.s - a.s})}'}))
+
+    def test_ignore_categories(self):
+        visualization_data = self.make_adapter()
+        params = ScatterplotStructure(visualization_data, ignore_categories=True).call_build_visualization_in_javascript()
+        self.assertEqual(params, self.get_params({55: 'true'}))
+
+    def test_background_labels(self):
+        visualization_data = self.make_adapter()
+        params = ScatterplotStructure(visualization_data, background_labels=[{'Text': 'Topic 0', 'X': 0.5242579971278757, 'Y': 0.8272937510221724}, {'Text': 'Topic 1', 'X': 0.7107755717675702, 'Y': 0.5034326824672314}, {'Text': 'Topic 2', 'X': 0.09014690078982, 'Y': 0.6261596586530888}]).call_build_visualization_in_javascript()
+        self.assertEqual(params, self.get_params({56: '[{"Text": "Topic 0", "X": 0.5242579971278757, "Y": 0.8272937510221724}, {"Text": "Topic 1", "X": 0.7107755717675702, "Y": 0.5034326824672314}, {"Text": "Topic 2", "X": 0.09014690078982, "Y": 0.6261596586530888}]'}))
+
+    def test_label_priority_column(self):
+        visualization_data = self.make_adapter()
+        params = ScatterplotStructure(visualization_data, label_priority_column='LabelPriority').call_build_visualization_in_javascript()
+        self.assertEqual(params, self.get_params({57: '"LabelPriority"'}))
+
+    def test_text_color_column(self):
+        visualization_data = self.make_adapter()
+        params = ScatterplotStructure(visualization_data, text_color_column='TextColor').call_build_visualization_in_javascript()
+        self.assertEqual(params, self.get_params({58: '"TextColor"'}))
+
+    def test_suppress_label_column(self):
+        visualization_data = self.make_adapter()
+        params = ScatterplotStructure(visualization_data, suppress_text_column='Suppress').call_build_visualization_in_javascript()
+        self.assertEqual(params, self.get_params({59: '"Suppress"'}))
+
+    def test_background_color(self):
+        visualization_data = self.make_adapter()
+        params = ScatterplotStructure(visualization_data, background_color='#444444').call_build_visualization_in_javascript()
+        self.assertEqual(params, self.get_params({60: '"#444444"'}))
+
+    def test_censor_point_column(self):
+        visualization_data = self.make_adapter()
+        params = ScatterplotStructure(visualization_data, censor_point_column='CensorPoint').call_build_visualization_in_javascript()
+        self.assertEqual(params, self.get_params({61: '"CensorPoint"'}))
+
+    def test_right_order_column(self):
+        visualization_data = self.make_adapter()
+        params = ScatterplotStructure(visualization_data, right_order_column='Priority').call_build_visualization_in_javascript()
+        self.assertEqual(params, self.get_params({62: '"Priority"'}))
+
+    def test_sentence_piece(self):
+        visualization_data = self.make_adapter()
+        params = ScatterplotStructure(visualization_data, subword_encoding='RoBERTa').call_build_visualization_in_javascript()
+        self.assertEqual(params, self.get_params({63: '"RoBERTa"'}))
+
+    def test_top_terms_length(self):
+        visualization_data = self.make_adapter()
+        params = ScatterplotStructure(visualization_data, top_terms_length=5).call_build_visualization_in_javascript()
+        self.assertEqual(params, self.get_params({64: '5'}))
+
+    def test_top_terms_left_buffer(self):
+        visualization_data = self.make_adapter()
+        params = ScatterplotStructure(visualization_data, top_terms_left_buffer=10).call_build_visualization_in_javascript()
+        self.assertEqual(params, self.get_params({65: '10'}))
+
+    def test_get_column_header_html(self):
+        visualization_data = self.make_adapter()
+        params = ScatterplotStructure(visualization_data, get_column_header_html='function(a,b,c,d,e) {return "X"}').call_build_visualization_in_javascript()
+        self.assertEqual(params, self.get_params({66: 'function(a,b,c,d,e) {return "X"}'}))
+
+    def test_term_word(self):
+        visualization_data = self.make_adapter()
+        params = ScatterplotStructure(visualization_data, term_word='Phone').call_build_visualization_in_javascript()
+        self.assertEqual(params, self.get_params({67: '"Phone"'}))
+
+    def test_show_term_etc(self):
+        visualization_data = self.make_adapter()
+        params = ScatterplotStructure(visualization_data, show_term_etc=False).call_build_visualization_in_javascript()
+        self.assertEqual(params, self.get_params({68: 'false'}))
+
+    def test_sort_contexts_by_meta(self):
+        visualization_data = self.make_adapter()
+        params = ScatterplotStructure(visualization_data, sort_contexts_by_meta=True).call_build_visualization_in_javascript()
+        self.assertEqual(params, self.get_params({69: 'true'}))
+
+    def test_suppress_circles(self):
+        visualization_data = self.make_adapter()
+        params = ScatterplotStructure(visualization_data, suppress_circles=True).call_build_visualization_in_javascript()
+        self.assertEqual(params, self.get_params({70: 'true'}))
+
+    def test_text_size_column(self):
+        visualization_data = self.make_adapter()
+        params = ScatterplotStructure(visualization_data, text_size_column='TextSize').call_build_visualization_in_javascript()
+        self.assertEqual(params, self.get_params({71: '"TextSize"'}))
+
+    def test_category_colors(self):
+        visualization_data = self.make_adapter()
+        params = ScatterplotStructure(visualization_data, category_colors={'Democratic': '0000FF', 'Republican': 'FF0000'}).call_build_visualization_in_javascript()
+        self.assertEqual(params, self.get_params({72: '{"Democratic": "0000FF", "Republican": "FF0000"}'}))
+
+    def test_document_word(self):
+        visualization_data = self.make_adapter()
+        params = ScatterplotStructure(visualization_data, document_word='paragraph').call_build_visualization_in_javascript()
+        self.assertEqual(params, self.get_params({73: '"paragraph"', 74: '"paragraphs"'}))
+
+    def test_document_word_plural(self):
+        visualization_data = self.make_adapter()
+        params = ScatterplotStructure(visualization_data, document_word_plural='multiple paragraphs').call_build_visualization_in_javascript()
+        self.assertEqual(params, self.get_params({74: '"multiple paragraphs"'}))
+
+    def test_category_order(self):
+        visualization_data = self.make_adapter()
+        self.assertEqual(ScatterplotStructure(visualization_data, category_order=['Dem', 'Rep']).call_build_visualization_in_javascript(), self.get_params({75: '["Dem", "Rep"]'}))
+
+    def test_include_gradient(self):
+        visualization_data = self.make_adapter()
+        params = ScatterplotStructure(visualization_data, include_gradient=True).call_build_visualization_in_javascript()
+        self.assertEqual(params, self.get_params({76: 'true'}))
+
+    def test_left_gradient_term(self):
+        visualization_data = self.make_adapter()
+        params = ScatterplotStructure(visualization_data, left_gradient_term='Left Gradient').call_build_visualization_in_javascript()
+        self.assertEqual(params, self.get_params({77: '"Left Gradient"'}))
+
+    def test_middle_gradient_term(self):
+        visualization_data = self.make_adapter()
+        params = ScatterplotStructure(visualization_data, middle_gradient_term='Middle Gradient').call_build_visualization_in_javascript()
+        self.assertEqual(params, self.get_params({78: '"Middle Gradient"'}))
+
+    def test_right_gradient_term(self):
+        visualization_data = self.make_adapter()
+        params = ScatterplotStructure(visualization_data, right_gradient_term='Right Gradient').call_build_visualization_in_javascript()
+        self.assertEqual(params, self.get_params({79: '"Right Gradient"'}))
+
+    def test_gradient_text_color(self):
+        visualization_data = self.make_adapter()
+        params = ScatterplotStructure(visualization_data, gradient_text_color='black').call_build_visualization_in_javascript()
+        self.assertEqual(params, self.get_params({80: '"black"'}))
+
+    def test_gradient_colors(self):
+        visualization_data = self.make_adapter()
+        params = ScatterplotStructure(visualization_data, gradient_colors=['#0000ff', '#fe0100', '#00ff00']).call_build_visualization_in_javascript()
+        self.assertEqual(params, self.get_params({81: '["#0000ff", "#fe0100", "#00ff00"]'}))
+
+    def test_category_term_score_scaler(self):
+        visualization_data = self.make_adapter()
+        cat_term_scaler = '(scores => (maxScore=>scores.flatMap(score=>-0.5*(1 + score/maxScore)))(Math.max(...scores.flatMap(Math.abs))))'
+        params = ScatterplotStructure(visualization_data, category_term_score_scaler=cat_term_scaler).call_build_visualization_in_javascript()
+        self.assertEqual(params, self.get_params({82: cat_term_scaler}))
+
+    def test_show_chart(self):
+        visualization_data = self.make_adapter()
+        params = ScatterplotStructure(visualization_data, show_chart=True).call_build_visualization_in_javascript()
+        self.assertEqual(params, self.get_params({83: 'true'}))
+

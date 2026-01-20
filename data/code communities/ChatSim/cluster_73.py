@@ -1,0 +1,478 @@
+# Cluster 73
+
+@functools.wraps(main_func)
+def new_main(*args, **kwargs):
+    parent_cwd = os.environ.get('TRAINING_PARENT_WORK_DIR', None)
+    has_parent = parent_cwd is not None
+    has_rank = get_has_ddp_rank()
+    assert has_parent == has_rank, f'Inconsistent state: has_parent={has_parent}, has_rank={has_rank}'
+    if has_parent:
+        sys.argv.extend([f'hydra.run.dir={parent_cwd}'])
+    main_func(*args, **kwargs)
+
+def get_has_ddp_rank():
+    master_port = os.environ.get('MASTER_PORT', None)
+    node_rank = os.environ.get('NODE_RANK', None)
+    local_rank = os.environ.get('LOCAL_RANK', None)
+    world_size = os.environ.get('WORLD_SIZE', None)
+    has_rank = master_port is not None or node_rank is not None or local_rank is not None or (world_size is not None)
+    return has_rank
+
+def handle_ddp_parent_process():
+    parent_cwd = os.environ.get('TRAINING_PARENT_WORK_DIR', None)
+    has_parent = parent_cwd is not None
+    has_rank = get_has_ddp_rank()
+    assert has_parent == has_rank, f'Inconsistent state: has_parent={has_parent}, has_rank={has_rank}'
+    if parent_cwd is None:
+        os.environ['TRAINING_PARENT_WORK_DIR'] = os.getcwd()
+    return has_parent
+
+class BaseInpaintingTrainingModule(ptl.LightningModule):
+
+    def __init__(self, config, use_ddp, *args, predict_only=False, visualize_each_iters=100, average_generator=False, generator_avg_beta=0.999, average_generator_start_step=30000, average_generator_period=10, store_discr_outputs_for_vis=False, **kwargs):
+        super().__init__(*args, **kwargs)
+        LOGGER.info('BaseInpaintingTrainingModule init called')
+        self.config = config
+        self.generator = make_generator(config, **self.config.generator)
+        self.use_ddp = use_ddp
+        if not get_has_ddp_rank():
+            LOGGER.info(f'Generator\n{self.generator}')
+        if not predict_only:
+            self.save_hyperparameters(self.config)
+            self.discriminator = make_discriminator(**self.config.discriminator)
+            self.adversarial_loss = make_discrim_loss(**self.config.losses.adversarial)
+            self.visualizer = make_visualizer(**self.config.visualizer)
+            self.val_evaluator = make_evaluator(**self.config.evaluator)
+            self.test_evaluator = make_evaluator(**self.config.evaluator)
+            if not get_has_ddp_rank():
+                LOGGER.info(f'Discriminator\n{self.discriminator}')
+            extra_val = self.config.data.get('extra_val', ())
+            if extra_val:
+                self.extra_val_titles = list(extra_val)
+                self.extra_evaluators = nn.ModuleDict({k: make_evaluator(**self.config.evaluator) for k in extra_val})
+            else:
+                self.extra_evaluators = {}
+            self.average_generator = average_generator
+            self.generator_avg_beta = generator_avg_beta
+            self.average_generator_start_step = average_generator_start_step
+            self.average_generator_period = average_generator_period
+            self.generator_average = None
+            self.last_generator_averaging_step = -1
+            self.store_discr_outputs_for_vis = store_discr_outputs_for_vis
+            if self.config.losses.get('l1', {'weight_known': 0})['weight_known'] > 0:
+                self.loss_l1 = nn.L1Loss(reduction='none')
+            if self.config.losses.get('mse', {'weight': 0})['weight'] > 0:
+                self.loss_mse = nn.MSELoss(reduction='none')
+            if self.config.losses.perceptual.weight > 0:
+                self.loss_pl = PerceptualLoss()
+            if self.config.losses.get('resnet_pl', {'weight': 0})['weight'] > 0:
+                self.loss_resnet_pl = ResNetPL(**self.config.losses.resnet_pl)
+            else:
+                self.loss_resnet_pl = None
+        self.visualize_each_iters = visualize_each_iters
+        LOGGER.info('BaseInpaintingTrainingModule init done')
+
+    def configure_optimizers(self):
+        discriminator_params = list(self.discriminator.parameters())
+        return [dict(optimizer=make_optimizer(self.generator.parameters(), **self.config.optimizers.generator)), dict(optimizer=make_optimizer(discriminator_params, **self.config.optimizers.discriminator))]
+
+    def train_dataloader(self):
+        kwargs = dict(self.config.data.train)
+        if self.use_ddp:
+            kwargs['ddp_kwargs'] = dict(num_replicas=self.trainer.num_nodes * self.trainer.num_processes, rank=self.trainer.global_rank, shuffle=True)
+        dataloader = make_default_train_dataloader(**self.config.data.train)
+        return dataloader
+
+    def val_dataloader(self):
+        res = [make_default_val_dataloader(**self.config.data.val)]
+        if self.config.data.visual_test is not None:
+            res = res + [make_default_val_dataloader(**self.config.data.visual_test)]
+        else:
+            res = res + res
+        extra_val = self.config.data.get('extra_val', ())
+        if extra_val:
+            res += [make_default_val_dataloader(**extra_val[k]) for k in self.extra_val_titles]
+        return res
+
+    def training_step(self, batch, batch_idx, optimizer_idx=None):
+        self._is_training_step = True
+        return self._do_step(batch, batch_idx, mode='train', optimizer_idx=optimizer_idx)
+
+    def validation_step(self, batch, batch_idx, dataloader_idx):
+        extra_val_key = None
+        if dataloader_idx == 0:
+            mode = 'val'
+        elif dataloader_idx == 1:
+            mode = 'test'
+        else:
+            mode = 'extra_val'
+            extra_val_key = self.extra_val_titles[dataloader_idx - 2]
+        self._is_training_step = False
+        return self._do_step(batch, batch_idx, mode=mode, extra_val_key=extra_val_key)
+
+    def training_step_end(self, batch_parts_outputs):
+        if self.training and self.average_generator and (self.global_step >= self.average_generator_start_step) and (self.global_step >= self.last_generator_averaging_step + self.average_generator_period):
+            if self.generator_average is None:
+                self.generator_average = copy.deepcopy(self.generator)
+            else:
+                update_running_average(self.generator_average, self.generator, decay=self.generator_avg_beta)
+            self.last_generator_averaging_step = self.global_step
+        full_loss = batch_parts_outputs['loss'].mean() if torch.is_tensor(batch_parts_outputs['loss']) else torch.tensor(batch_parts_outputs['loss']).float().requires_grad_(True)
+        log_info = {k: v.mean() for k, v in batch_parts_outputs['log_info'].items()}
+        self.log_dict(log_info, on_step=True, on_epoch=False)
+        return full_loss
+
+    def validation_epoch_end(self, outputs):
+        outputs = [step_out for out_group in outputs for step_out in out_group]
+        averaged_logs = average_dicts((step_out['log_info'] for step_out in outputs))
+        self.log_dict({k: v.mean() for k, v in averaged_logs.items()})
+        pd.set_option('display.max_columns', 500)
+        pd.set_option('display.width', 1000)
+        val_evaluator_states = [s['val_evaluator_state'] for s in outputs if 'val_evaluator_state' in s]
+        val_evaluator_res = self.val_evaluator.evaluation_end(states=val_evaluator_states)
+        val_evaluator_res_df = pd.DataFrame(val_evaluator_res).stack(1).unstack(0)
+        val_evaluator_res_df.dropna(axis=1, how='all', inplace=True)
+        LOGGER.info(f'Validation metrics after epoch #{self.current_epoch}, total {self.global_step} iterations:\n{val_evaluator_res_df}')
+        for k, v in flatten_dict(val_evaluator_res).items():
+            self.log(f'val_{k}', v)
+        test_evaluator_states = [s['test_evaluator_state'] for s in outputs if 'test_evaluator_state' in s]
+        test_evaluator_res = self.test_evaluator.evaluation_end(states=test_evaluator_states)
+        test_evaluator_res_df = pd.DataFrame(test_evaluator_res).stack(1).unstack(0)
+        test_evaluator_res_df.dropna(axis=1, how='all', inplace=True)
+        LOGGER.info(f'Test metrics after epoch #{self.current_epoch}, total {self.global_step} iterations:\n{test_evaluator_res_df}')
+        for k, v in flatten_dict(test_evaluator_res).items():
+            self.log(f'test_{k}', v)
+        if self.extra_evaluators:
+            for cur_eval_title, cur_evaluator in self.extra_evaluators.items():
+                cur_state_key = f'extra_val_{cur_eval_title}_evaluator_state'
+                cur_states = [s[cur_state_key] for s in outputs if cur_state_key in s]
+                cur_evaluator_res = cur_evaluator.evaluation_end(states=cur_states)
+                cur_evaluator_res_df = pd.DataFrame(cur_evaluator_res).stack(1).unstack(0)
+                cur_evaluator_res_df.dropna(axis=1, how='all', inplace=True)
+                LOGGER.info(f'Extra val {cur_eval_title} metrics after epoch #{self.current_epoch}, total {self.global_step} iterations:\n{cur_evaluator_res_df}')
+                for k, v in flatten_dict(cur_evaluator_res).items():
+                    self.log(f'extra_val_{cur_eval_title}_{k}', v)
+
+    def _do_step(self, batch, batch_idx, mode='train', optimizer_idx=None, extra_val_key=None):
+        if optimizer_idx == 0:
+            set_requires_grad(self.generator, True)
+            set_requires_grad(self.discriminator, False)
+        elif optimizer_idx == 1:
+            set_requires_grad(self.generator, False)
+            set_requires_grad(self.discriminator, True)
+        batch = self(batch)
+        total_loss = 0
+        metrics = {}
+        if optimizer_idx is None or optimizer_idx == 0:
+            total_loss, metrics = self.generator_loss(batch)
+        elif optimizer_idx is None or optimizer_idx == 1:
+            if self.config.losses.adversarial.weight > 0:
+                total_loss, metrics = self.discriminator_loss(batch)
+        if self.get_ddp_rank() in (None, 0) and (batch_idx % self.visualize_each_iters == 0 or mode == 'test'):
+            if self.config.losses.adversarial.weight > 0:
+                if self.store_discr_outputs_for_vis:
+                    with torch.no_grad():
+                        self.store_discr_outputs(batch)
+            vis_suffix = f'_{mode}'
+            if mode == 'extra_val':
+                vis_suffix += f'_{extra_val_key}'
+            self.visualizer(self.current_epoch, batch_idx, batch, suffix=vis_suffix)
+        metrics_prefix = f'{mode}_'
+        if mode == 'extra_val':
+            metrics_prefix += f'{extra_val_key}_'
+        result = dict(loss=total_loss, log_info=add_prefix_to_keys(metrics, metrics_prefix))
+        if mode == 'val':
+            result['val_evaluator_state'] = self.val_evaluator.process_batch(batch)
+        elif mode == 'test':
+            result['test_evaluator_state'] = self.test_evaluator.process_batch(batch)
+        elif mode == 'extra_val':
+            result[f'extra_val_{extra_val_key}_evaluator_state'] = self.extra_evaluators[extra_val_key].process_batch(batch)
+        return result
+
+    def get_current_generator(self, no_average=False):
+        if not no_average and (not self.training) and self.average_generator and (self.generator_average is not None):
+            return self.generator_average
+        return self.generator
+
+    def forward(self, batch: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
+        """Pass data through generator and obtain at leas 'predicted_image' and 'inpainted' keys"""
+        raise NotImplementedError()
+
+    def generator_loss(self, batch) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+        raise NotImplementedError()
+
+    def discriminator_loss(self, batch) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+        raise NotImplementedError()
+
+    def store_discr_outputs(self, batch):
+        out_size = batch['image'].shape[2:]
+        discr_real_out, _ = self.discriminator(batch['image'])
+        discr_fake_out, _ = self.discriminator(batch['predicted_image'])
+        batch['discr_output_real'] = F.interpolate(discr_real_out, size=out_size, mode='nearest')
+        batch['discr_output_fake'] = F.interpolate(discr_fake_out, size=out_size, mode='nearest')
+        batch['discr_output_diff'] = batch['discr_output_real'] - batch['discr_output_fake']
+
+    def get_ddp_rank(self):
+        return self.trainer.global_rank if self.trainer.num_nodes * self.trainer.num_processes > 1 else None
+
+def make_discrim_loss(kind, **kwargs):
+    if kind == 'r1':
+        return NonSaturatingWithR1(**kwargs)
+    elif kind == 'bce':
+        return BCELoss(**kwargs)
+    raise ValueError(f'Unknown adversarial loss kind {kind}')
+
+@functools.wraps(main_func)
+def new_main(*args, **kwargs):
+    parent_cwd = os.environ.get('TRAINING_PARENT_WORK_DIR', None)
+    has_parent = parent_cwd is not None
+    has_rank = get_has_ddp_rank()
+    assert has_parent == has_rank, f'Inconsistent state: has_parent={has_parent}, has_rank={has_rank}'
+    if has_parent:
+        sys.argv.extend([f'hydra.run.dir={parent_cwd}'])
+    main_func(*args, **kwargs)
+
+def handle_ddp_parent_process():
+    parent_cwd = os.environ.get('TRAINING_PARENT_WORK_DIR', None)
+    has_parent = parent_cwd is not None
+    has_rank = get_has_ddp_rank()
+    assert has_parent == has_rank, f'Inconsistent state: has_parent={has_parent}, has_rank={has_rank}'
+    if parent_cwd is None:
+        os.environ['TRAINING_PARENT_WORK_DIR'] = os.getcwd()
+    return has_parent
+
+class BaseInpaintingTrainingModule(ptl.LightningModule):
+
+    def __init__(self, config, use_ddp, *args, predict_only=False, visualize_each_iters=100, average_generator=False, generator_avg_beta=0.999, average_generator_start_step=30000, average_generator_period=10, store_discr_outputs_for_vis=False, **kwargs):
+        super().__init__(*args, **kwargs)
+        LOGGER.info('BaseInpaintingTrainingModule init called')
+        self.config = config
+        self.generator = make_generator(config, **self.config.generator)
+        self.use_ddp = use_ddp
+        if not get_has_ddp_rank():
+            LOGGER.info(f'Generator\n{self.generator}')
+        if not predict_only:
+            self.save_hyperparameters(self.config)
+            self.discriminator = make_discriminator(**self.config.discriminator)
+            self.adversarial_loss = make_discrim_loss(**self.config.losses.adversarial)
+            self.visualizer = make_visualizer(**self.config.visualizer)
+            self.val_evaluator = make_evaluator(**self.config.evaluator)
+            self.test_evaluator = make_evaluator(**self.config.evaluator)
+            if not get_has_ddp_rank():
+                LOGGER.info(f'Discriminator\n{self.discriminator}')
+            extra_val = self.config.data.get('extra_val', ())
+            if extra_val:
+                self.extra_val_titles = list(extra_val)
+                self.extra_evaluators = nn.ModuleDict({k: make_evaluator(**self.config.evaluator) for k in extra_val})
+            else:
+                self.extra_evaluators = {}
+            self.average_generator = average_generator
+            self.generator_avg_beta = generator_avg_beta
+            self.average_generator_start_step = average_generator_start_step
+            self.average_generator_period = average_generator_period
+            self.generator_average = None
+            self.last_generator_averaging_step = -1
+            self.store_discr_outputs_for_vis = store_discr_outputs_for_vis
+            if self.config.losses.get('l1', {'weight_known': 0})['weight_known'] > 0:
+                self.loss_l1 = nn.L1Loss(reduction='none')
+            if self.config.losses.get('mse', {'weight': 0})['weight'] > 0:
+                self.loss_mse = nn.MSELoss(reduction='none')
+            if self.config.losses.perceptual.weight > 0:
+                self.loss_pl = PerceptualLoss()
+            if self.config.losses.get('resnet_pl', {'weight': 0})['weight'] > 0:
+                self.loss_resnet_pl = ResNetPL(**self.config.losses.resnet_pl)
+            else:
+                self.loss_resnet_pl = None
+        self.visualize_each_iters = visualize_each_iters
+        LOGGER.info('BaseInpaintingTrainingModule init done')
+
+    def configure_optimizers(self):
+        discriminator_params = list(self.discriminator.parameters())
+        return [dict(optimizer=make_optimizer(self.generator.parameters(), **self.config.optimizers.generator)), dict(optimizer=make_optimizer(discriminator_params, **self.config.optimizers.discriminator))]
+
+    def train_dataloader(self):
+        kwargs = dict(self.config.data.train)
+        if self.use_ddp:
+            kwargs['ddp_kwargs'] = dict(num_replicas=self.trainer.num_nodes * self.trainer.num_processes, rank=self.trainer.global_rank, shuffle=True)
+        dataloader = make_default_train_dataloader(**self.config.data.train)
+        return dataloader
+
+    def val_dataloader(self):
+        res = [make_default_val_dataloader(**self.config.data.val)]
+        if self.config.data.visual_test is not None:
+            res = res + [make_default_val_dataloader(**self.config.data.visual_test)]
+        else:
+            res = res + res
+        extra_val = self.config.data.get('extra_val', ())
+        if extra_val:
+            res += [make_default_val_dataloader(**extra_val[k]) for k in self.extra_val_titles]
+        return res
+
+    def training_step(self, batch, batch_idx, optimizer_idx=None):
+        self._is_training_step = True
+        return self._do_step(batch, batch_idx, mode='train', optimizer_idx=optimizer_idx)
+
+    def validation_step(self, batch, batch_idx, dataloader_idx):
+        extra_val_key = None
+        if dataloader_idx == 0:
+            mode = 'val'
+        elif dataloader_idx == 1:
+            mode = 'test'
+        else:
+            mode = 'extra_val'
+            extra_val_key = self.extra_val_titles[dataloader_idx - 2]
+        self._is_training_step = False
+        return self._do_step(batch, batch_idx, mode=mode, extra_val_key=extra_val_key)
+
+    def training_step_end(self, batch_parts_outputs):
+        if self.training and self.average_generator and (self.global_step >= self.average_generator_start_step) and (self.global_step >= self.last_generator_averaging_step + self.average_generator_period):
+            if self.generator_average is None:
+                self.generator_average = copy.deepcopy(self.generator)
+            else:
+                update_running_average(self.generator_average, self.generator, decay=self.generator_avg_beta)
+            self.last_generator_averaging_step = self.global_step
+        full_loss = batch_parts_outputs['loss'].mean() if torch.is_tensor(batch_parts_outputs['loss']) else torch.tensor(batch_parts_outputs['loss']).float().requires_grad_(True)
+        log_info = {k: v.mean() for k, v in batch_parts_outputs['log_info'].items()}
+        self.log_dict(log_info, on_step=True, on_epoch=False)
+        return full_loss
+
+    def validation_epoch_end(self, outputs):
+        outputs = [step_out for out_group in outputs for step_out in out_group]
+        averaged_logs = average_dicts((step_out['log_info'] for step_out in outputs))
+        self.log_dict({k: v.mean() for k, v in averaged_logs.items()})
+        pd.set_option('display.max_columns', 500)
+        pd.set_option('display.width', 1000)
+        val_evaluator_states = [s['val_evaluator_state'] for s in outputs if 'val_evaluator_state' in s]
+        val_evaluator_res = self.val_evaluator.evaluation_end(states=val_evaluator_states)
+        val_evaluator_res_df = pd.DataFrame(val_evaluator_res).stack(1).unstack(0)
+        val_evaluator_res_df.dropna(axis=1, how='all', inplace=True)
+        LOGGER.info(f'Validation metrics after epoch #{self.current_epoch}, total {self.global_step} iterations:\n{val_evaluator_res_df}')
+        for k, v in flatten_dict(val_evaluator_res).items():
+            self.log(f'val_{k}', v)
+        test_evaluator_states = [s['test_evaluator_state'] for s in outputs if 'test_evaluator_state' in s]
+        test_evaluator_res = self.test_evaluator.evaluation_end(states=test_evaluator_states)
+        test_evaluator_res_df = pd.DataFrame(test_evaluator_res).stack(1).unstack(0)
+        test_evaluator_res_df.dropna(axis=1, how='all', inplace=True)
+        LOGGER.info(f'Test metrics after epoch #{self.current_epoch}, total {self.global_step} iterations:\n{test_evaluator_res_df}')
+        for k, v in flatten_dict(test_evaluator_res).items():
+            self.log(f'test_{k}', v)
+        if self.extra_evaluators:
+            for cur_eval_title, cur_evaluator in self.extra_evaluators.items():
+                cur_state_key = f'extra_val_{cur_eval_title}_evaluator_state'
+                cur_states = [s[cur_state_key] for s in outputs if cur_state_key in s]
+                cur_evaluator_res = cur_evaluator.evaluation_end(states=cur_states)
+                cur_evaluator_res_df = pd.DataFrame(cur_evaluator_res).stack(1).unstack(0)
+                cur_evaluator_res_df.dropna(axis=1, how='all', inplace=True)
+                LOGGER.info(f'Extra val {cur_eval_title} metrics after epoch #{self.current_epoch}, total {self.global_step} iterations:\n{cur_evaluator_res_df}')
+                for k, v in flatten_dict(cur_evaluator_res).items():
+                    self.log(f'extra_val_{cur_eval_title}_{k}', v)
+
+    def _do_step(self, batch, batch_idx, mode='train', optimizer_idx=None, extra_val_key=None):
+        if optimizer_idx == 0:
+            set_requires_grad(self.generator, True)
+            set_requires_grad(self.discriminator, False)
+        elif optimizer_idx == 1:
+            set_requires_grad(self.generator, False)
+            set_requires_grad(self.discriminator, True)
+        batch = self(batch)
+        total_loss = 0
+        metrics = {}
+        if optimizer_idx is None or optimizer_idx == 0:
+            total_loss, metrics = self.generator_loss(batch)
+        elif optimizer_idx is None or optimizer_idx == 1:
+            if self.config.losses.adversarial.weight > 0:
+                total_loss, metrics = self.discriminator_loss(batch)
+        if self.get_ddp_rank() in (None, 0) and (batch_idx % self.visualize_each_iters == 0 or mode == 'test'):
+            if self.config.losses.adversarial.weight > 0:
+                if self.store_discr_outputs_for_vis:
+                    with torch.no_grad():
+                        self.store_discr_outputs(batch)
+            vis_suffix = f'_{mode}'
+            if mode == 'extra_val':
+                vis_suffix += f'_{extra_val_key}'
+            self.visualizer(self.current_epoch, batch_idx, batch, suffix=vis_suffix)
+        metrics_prefix = f'{mode}_'
+        if mode == 'extra_val':
+            metrics_prefix += f'{extra_val_key}_'
+        result = dict(loss=total_loss, log_info=add_prefix_to_keys(metrics, metrics_prefix))
+        if mode == 'val':
+            result['val_evaluator_state'] = self.val_evaluator.process_batch(batch)
+        elif mode == 'test':
+            result['test_evaluator_state'] = self.test_evaluator.process_batch(batch)
+        elif mode == 'extra_val':
+            result[f'extra_val_{extra_val_key}_evaluator_state'] = self.extra_evaluators[extra_val_key].process_batch(batch)
+        return result
+
+    def get_current_generator(self, no_average=False):
+        if not no_average and (not self.training) and self.average_generator and (self.generator_average is not None):
+            return self.generator_average
+        return self.generator
+
+    def forward(self, batch: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
+        """Pass data through generator and obtain at leas 'predicted_image' and 'inpainted' keys"""
+        raise NotImplementedError()
+
+    def generator_loss(self, batch) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+        raise NotImplementedError()
+
+    def discriminator_loss(self, batch) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+        raise NotImplementedError()
+
+    def store_discr_outputs(self, batch):
+        out_size = batch['image'].shape[2:]
+        discr_real_out, _ = self.discriminator(batch['image'])
+        discr_fake_out, _ = self.discriminator(batch['predicted_image'])
+        batch['discr_output_real'] = F.interpolate(discr_real_out, size=out_size, mode='nearest')
+        batch['discr_output_fake'] = F.interpolate(discr_fake_out, size=out_size, mode='nearest')
+        batch['discr_output_diff'] = batch['discr_output_real'] - batch['discr_output_fake']
+
+    def get_ddp_rank(self):
+        return self.trainer.global_rank if self.trainer.num_nodes * self.trainer.num_processes > 1 else None
+
+def make_generator(config, kind, **kwargs):
+    logging.info(f'Make generator {kind}')
+    if kind == 'pix2pixhd_multidilated':
+        return MultiDilatedGlobalGenerator(**kwargs)
+    if kind == 'pix2pixhd_global':
+        return GlobalGenerator(**kwargs)
+    if kind == 'ffc_resnet':
+        return FFCResNetGenerator(**kwargs)
+    raise ValueError(f'Unknown generator kind {kind}')
+
+def make_discriminator(kind, **kwargs):
+    logging.info(f'Make discriminator {kind}')
+    if kind == 'pix2pixhd_nlayer_multidilated':
+        return MultidilatedNLayerDiscriminator(**kwargs)
+    if kind == 'pix2pixhd_nlayer':
+        return NLayerDiscriminator(**kwargs)
+    raise ValueError(f'Unknown discriminator kind {kind}')
+
+def make_visualizer(kind, **kwargs):
+    logging.info(f'Make visualizer {kind}')
+    if kind == 'directory':
+        return DirectoryVisualizer(**kwargs)
+    if kind == 'noop':
+        return NoopVisualizer()
+    raise ValueError(f'Unknown visualizer kind {kind}')
+
+def make_evaluator(kind='default', ssim=True, lpips=True, fid=True, integral_kind=None, **kwargs):
+    logging.info(f'Make evaluator {kind}')
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    metrics = {}
+    if ssim:
+        metrics['ssim'] = SSIMScore()
+    if lpips:
+        metrics['lpips'] = LPIPSScore()
+    if fid:
+        metrics['fid'] = FIDScore().to(device)
+    if integral_kind is None:
+        integral_func = None
+    elif integral_kind == 'ssim_fid100_f1':
+        integral_func = ssim_fid100_f1
+    elif integral_kind == 'lpips_fid100_f1':
+        integral_func = lpips_fid100_f1
+    else:
+        raise ValueError(f'Unexpected integral_kind={integral_kind}')
+    if kind == 'default':
+        return InpaintingEvaluatorOnline(scores=metrics, integral_func=integral_func, integral_title=integral_kind, **kwargs)
+

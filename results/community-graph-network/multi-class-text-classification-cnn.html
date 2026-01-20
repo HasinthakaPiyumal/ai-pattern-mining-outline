@@ -1,0 +1,181 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        
+            
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/dist/vis-network.min.css" integrity="sha512-WgxfT5LWjfszlPHXRmBWHkV2eceiWTOBvrKCNbdgDYTHrT2AeLCGbF4sZlZw3UMN3WtL0tGUoIAKsu8mllg/XA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js" integrity="sha512-LnvoEWDFrqGHlHmDD2101OrLcbsfkrzoSpvtSQtxK3RMnRV0eOkhhBN2dXHKRrUU8p2DGRTk35n4O8nWSVe1mQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+        
+<center>
+<h1></h1>
+</center>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6"
+          crossorigin="anonymous"
+        />
+        <script
+          src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
+          crossorigin="anonymous"
+        ></script>
+
+
+        <center>
+          <h1></h1>
+        </center>
+        <style type="text/css">
+
+             #mynetwork {
+                 width: 100%;
+                 height: 100vh;
+                 background-color: #FFFFFF;
+                 border: 1px solid lightgray;
+                 position: relative;
+                 float: left;
+             }
+
+             
+
+             
+             #config {
+                 float: left;
+                 width: 400px;
+                 height: 600px;
+             }
+             
+
+             
+        </style>
+    </head>
+
+
+    <body>
+        <div class="card" style="width: 100%">
+            
+            
+            <div id="mynetwork" class="card-body"></div>
+        </div>
+
+        
+        
+            <div id="config"></div>
+        
+
+        <script type="text/javascript">
+
+              // initialize global variables.
+              var edges;
+              var nodes;
+              var allNodes;
+              var allEdges;
+              var nodeColors;
+              var originalNodes;
+              var network;
+              var container;
+              var options, data;
+              var filter = {
+                  item : '',
+                  property : '',
+                  value : []
+              };
+
+              
+
+              
+
+              // This method is responsible for drawing the graph, returns the drawn network
+              function drawGraph() {
+                  var container = document.getElementById('mynetwork');
+
+                  
+
+                  // parsing and collecting nodes and edges from the python
+                  nodes = new vis.DataSet([{"color": "#EF476F", "font": {"color": "black"}, "id": "train.py:train_cnn", "label": "train_cnn", "shape": "dot", "size": 24, "title": "\u003cb\u003eFile:\u003c/b\u003e train.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e train_cnn"}, {"color": "#06D6A0", "font": {"color": "black"}, "id": "data_helper.py:load_data_and_labels", "label": "load_data_and_labels", "shape": "dot", "size": 18, "title": "\u003cb\u003eFile:\u003c/b\u003e data_helper.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e load_data_and_labels"}, {"color": "#118AB2", "font": {"color": "black"}, "id": "text_cnn.py:TextCNN", "label": "TextCNN", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e text_cnn.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e TextCNN"}, {"color": "#06D6A0", "font": {"color": "black"}, "id": "data_helper.py:batch_iter", "label": "batch_iter", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e data_helper.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e batch_iter"}, {"color": "#EF476F", "font": {"color": "black"}, "id": "train.py:train_step", "label": "train_step", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e train.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e train_step"}, {"color": "#EF476F", "font": {"color": "black"}, "id": "train.py:dev_step", "label": "dev_step", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e train.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e dev_step"}, {"color": "#EF476F", "font": {"color": "black"}, "id": "train.py:\u003cmodule\u003e", "label": "\u003cmodule\u003e", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e train.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e \u003cmodule\u003e"}, {"color": "#06D6A0", "font": {"color": "black"}, "id": "data_helper.py:clean_str", "label": "clean_str", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e data_helper.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e clean_str"}, {"color": "#06D6A0", "font": {"color": "black"}, "id": "data_helper.py:\u003cmodule\u003e", "label": "\u003cmodule\u003e", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e data_helper.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e \u003cmodule\u003e"}, {"color": "#FFD166", "font": {"color": "black"}, "id": "predict.py:predict_unseen_data", "label": "predict_unseen_data", "shape": "dot", "size": 18, "title": "\u003cb\u003eFile:\u003c/b\u003e predict.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e predict_unseen_data"}, {"color": "#FFD166", "font": {"color": "black"}, "id": "predict.py:\u003cmodule\u003e", "label": "\u003cmodule\u003e", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e predict.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e \u003cmodule\u003e"}]);
+                  edges = new vis.DataSet([{"arrows": "to", "color": "#666666", "from": "train.py:train_cnn", "to": "data_helper.py:load_data_and_labels", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "train.py:train_cnn", "to": "text_cnn.py:TextCNN", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "train.py:train_cnn", "to": "data_helper.py:batch_iter", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "train.py:train_cnn", "to": "train.py:train_step", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "train.py:train_cnn", "to": "train.py:dev_step", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "data_helper.py:load_data_and_labels", "to": "data_helper.py:clean_str", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "train.py:\u003cmodule\u003e", "to": "train.py:train_cnn", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "data_helper.py:\u003cmodule\u003e", "to": "data_helper.py:load_data_and_labels", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "predict.py:predict_unseen_data", "to": "data_helper.py:clean_str", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "predict.py:predict_unseen_data", "to": "data_helper.py:batch_iter", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "predict.py:\u003cmodule\u003e", "to": "predict.py:predict_unseen_data", "width": 1.4}]);
+
+                  nodeColors = {};
+                  allNodes = nodes.get({ returnType: "Object" });
+                  for (nodeId in allNodes) {
+                    nodeColors[nodeId] = allNodes[nodeId].color;
+                  }
+                  allEdges = edges.get({ returnType: "Object" });
+                  // adding nodes and edges to the graph
+                  data = {nodes: nodes, edges: edges};
+
+                  var options = {
+    "configure": {
+        "enabled": true,
+        "filter": [
+            "physics"
+        ]
+    },
+    "edges": {
+        "color": {
+            "inherit": true
+        },
+        "smooth": {
+            "enabled": true,
+            "type": "dynamic"
+        }
+    },
+    "interaction": {
+        "dragNodes": true,
+        "hideEdgesOnDrag": false,
+        "hideNodesOnDrag": false
+    },
+    "physics": {
+        "barnesHut": {
+            "avoidOverlap": 0,
+            "centralGravity": 0.25,
+            "damping": 0.09,
+            "gravitationalConstant": -5000,
+            "springConstant": 0.02,
+            "springLength": 150
+        },
+        "enabled": true,
+        "stabilization": {
+            "enabled": true,
+            "fit": true,
+            "iterations": 1000,
+            "onlyDynamicEdges": false,
+            "updateInterval": 50
+        }
+    }
+};
+
+                  
+
+
+                  
+                  // if this network requires displaying the configure window,
+                  // put it in its div
+                  options.configure["container"] = document.getElementById("config");
+                  
+
+                  network = new vis.Network(container, data, options);
+
+                  
+
+                  
+
+                  
+
+
+                  
+
+                  return network;
+
+              }
+              drawGraph();
+        </script>
+    
+<script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+
+</body>
+</html>

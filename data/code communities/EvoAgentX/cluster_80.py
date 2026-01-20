@@ -1,0 +1,68 @@
+# Cluster 80
+
+class TestEvaluator(unittest.TestCase):
+
+    def setUp(self):
+        self.benchmark = Mock(spec=Benchmark)
+        self.benchmark.get_test_data.return_value = [{'id': '1', 'input': 'test1'}, {'id': '2', 'input': 'test2'}]
+        self.benchmark.get_id.side_effect = lambda example: example['id']
+        self.benchmark.get_label.return_value = 'expected'
+        self.benchmark.evaluate.return_value = {'accuracy': 1.0}
+        self.llm = Mock(spec=BaseLLM)
+        self.agent_manager = Mock(spec=AgentManager)
+        self.workflow_graph = Mock(spec=WorkFlowGraph)
+        self.action_graph = Mock(spec=ActionGraph)
+        self.action_graph.execute.return_value = {'output': 'prediction'}
+        self.evaluator = Evaluator(llm=self.llm, num_workers=1, agent_manager=self.agent_manager)
+
+    @patch.object(Evaluator, '_execute_workflow_graph')
+    def test_single_thread_evaluation_workflow_graph(self, mock_execute):
+        mock_execute.return_value = ('workflow_graph_prediction', ['trajectory_data'])
+        results = self.evaluator.evaluate(graph=self.workflow_graph, benchmark=self.benchmark, eval_mode='test')
+        self.assertEqual(mock_execute.call_count, 2)
+        self.assertEqual(results, {'accuracy': 1.0})
+        self.assertEqual(len(self.evaluator.get_all_evaluation_records()), 2)
+
+    def test_single_thread_evaluation_action_graph(self):
+        results = self.evaluator.evaluate(graph=self.action_graph, benchmark=self.benchmark, eval_mode='test')
+        self.assertEqual(results, {'accuracy': 1.0})
+        self.assertEqual(len(self.evaluator.get_all_evaluation_records()), 2)
+
+    def test_evaluation_with_custom_collate(self):
+
+        def collate_func(x):
+            return {'processed_' + k: v for k, v in x.items()}
+        evaluator = Evaluator(llm=self.llm, num_workers=1, collate_func=collate_func)
+        evaluator.evaluate(graph=self.action_graph, benchmark=self.benchmark, eval_mode='test')
+        call_args = self.action_graph.execute.call_args_list[0][1]
+        self.assertTrue(all((k.startswith('processed_') for k in call_args.keys())))
+
+    def test_evaluation_with_output_postprocess(self):
+
+        def postprocess_func(x):
+            return x['output'].upper()
+        evaluator = Evaluator(llm=self.llm, num_workers=1, output_postprocess_func=postprocess_func)
+        evaluator.evaluate(graph=self.action_graph, benchmark=self.benchmark, eval_mode='test')
+        records = evaluator.get_all_evaluation_records()
+        for record in records.values():
+            self.assertEqual(record['prediction'], 'PREDICTION')
+
+    def test_get_example_evaluation_record(self):
+        self.evaluator.evaluate(graph=self.action_graph, benchmark=self.benchmark, eval_mode='test')
+        example = {'id': '1', 'input': 'test1'}
+        record = self.evaluator.get_example_evaluation_record(self.benchmark, example)
+        self.assertIsNotNone(record)
+        self.assertEqual(record['prediction'], {'output': 'prediction'})
+        self.assertEqual(record['label'], 'expected')
+        self.assertEqual(record['metrics'], {'accuracy': 1.0})
+
+    def test_invalid_eval_mode(self):
+        with self.assertRaises(AssertionError):
+            self.evaluator.evaluate(graph=self.action_graph, benchmark=self.benchmark, eval_mode='invalid')
+
+    def test_empty_data_evaluation(self):
+        self.benchmark.get_test_data.return_value = []
+        results = self.evaluator.evaluate(graph=self.action_graph, benchmark=self.benchmark, eval_mode='test')
+        self.assertEqual(results, {})
+        self.assertEqual(len(self.evaluator.get_all_evaluation_records()), 0)
+

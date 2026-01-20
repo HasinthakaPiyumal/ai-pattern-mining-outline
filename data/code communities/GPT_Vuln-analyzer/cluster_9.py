@@ -1,0 +1,136 @@
+# Cluster 9
+
+def DnsAI(analyze: str, key: Optional[str]) -> str:
+    openai.api_key = key
+    prompt = f'\n    Do a DNS analysis on the provided DNS scan information\n    The DNS output must return in a JSON format accorging to the provided\n    output format. The data must be accurate in regards towards a pentest report.\n    The data must follow the following rules:\n    1) The DNS scans must be done from a pentester point of view\n    2) The final output must be minimal according to the format given\n    3) The final output must be kept to a minimal\n\n    The output format:\n    {{\n        "A": [""],\n        "AAA": [""],\n        "NS": [""],\n        "MX": [""],\n        "PTR": [""],\n        "SOA": [""],\n        "TXT": [""]\n    }}\n\n    DNS Data to be analyzed: {analyze}\n    '
+    try:
+        completion = openai.Completion.create(engine=model_engine, prompt=prompt, max_tokens=1024, n=1, stop=None)
+        response = completion.choices[0].text
+        return dns_extract_data(str(response))
+    except KeyboardInterrupt:
+        print('Bye')
+        quit()
+
+def dns_extract_data(json_string: str) -> Any:
+    A_pattern = '"A": \\["(.*?)"\\]'
+    AAA_pattern = '"AAA: \\["(.*?)"\\]'
+    NS_pattern = '"NS": \\["(.*?)"\\]'
+    MX_pattern = '"MX": \\["(.*?)"\\]'
+    PTR_pattern = '"PTR": \\["(.*?)"\\]'
+    SOA_pattern = '"SOA": \\["(.*?)"\\]'
+    TXT_pattern = '"TXT": \\["(.*?)"\\]'
+    A = None
+    AAA = None
+    NS = None
+    MX = None
+    PTR = None
+    SOA = None
+    TXT = None
+    match = re.search(A_pattern, json_string)
+    if match:
+        A = match.group(1)
+    match = re.search(AAA_pattern, json_string)
+    if match:
+        AAA = match.group(1)
+    match = re.search(NS_pattern, json_string)
+    if match:
+        NS = match.group(1)
+    match = re.search(MX_pattern, json_string)
+    if match:
+        MX = match.group(1)
+    match = re.search(PTR_pattern, json_string)
+    if match:
+        PTR = match.group(1)
+    match = re.search(SOA_pattern, json_string)
+    if match:
+        SOA = match.group(1)
+    match = re.search(TXT_pattern, json_string)
+    if match:
+        TXT = match.group(1)
+    data = {'A': A, 'AAA': AAA, 'NS': NS, 'MX': MX, 'PTR': PTR, 'SOA': SOA, 'TXT': TXT}
+    json_output = json.dumps(data)
+    return json_output
+
+def dns_recon(target: Optional[str], key: str) -> str:
+    if key is not None:
+        pass
+    else:
+        raise ValueError('KeyNotFound: Key Not Provided')
+    if target is not None:
+        pass
+    else:
+        raise ValueError('InvalidTarget: Target Not Provided')
+    analyze = ''
+    record_types = ['A', 'AAAA', 'NS', 'CNAME', 'MX', 'PTR', 'SOA', 'TXT']
+    for records in track(record_types):
+        try:
+            answer = dns.resolver.resolve(target, records)
+            for server in answer:
+                st = server.to_text()
+                analyze += '\n'
+                analyze += records
+                analyze += ' : '
+                analyze += st
+        except dns.resolver.NoAnswer:
+            print('No record Found')
+            pass
+        except dns.resolver.NXDOMAIN:
+            print('NXDOMAIN record NOT Found')
+            pass
+        except KeyboardInterrupt:
+            print('Bye')
+            quit()
+    try:
+        response = DnsAI(key, analyze)
+        return str(response)
+    except KeyboardInterrupt:
+        print('Bye')
+        quit()
+
+def DnsAI(analyze: str, key: Optional[str]) -> str:
+    openai.api_key = key
+    prompt = f'\n    Do a DNS analysis on the provided DNS scan information\n    The DNS output must return in a JSON format accorging to the provided\n    output format. The data must be accurate in regards towards a pentest report.\n    The data must follow the following rules:\n    1) The DNS scans must be done from a pentester point of view\n    2) The final output must be minimal according to the format given\n    3) The final output must be kept to a minimal\n\n    The output format:\n    {{\n        "A": [""],\n        "AAA": [""],\n        "NS": [""],\n        "MX": [""],\n        "PTR": [""],\n        "SOA": [""],\n        "TXT": [""]\n    }}\n\n    DNS Data to be analyzed: {analyze}\n    '
+    try:
+        completion = openai.Completion.create(engine=model_engine, prompt=prompt, max_tokens=1024, n=1, stop=None)
+        response = completion.choices[0].text
+        return dns_extract_data(str(response))
+    except KeyboardInterrupt:
+        print('Bye')
+        quit()
+
+def dns_recon(target: Optional[str], key: str) -> str:
+    if key is not None:
+        pass
+    else:
+        raise ValueError('KeyNotFound: Key Not Provided')
+    if target is not None:
+        pass
+    else:
+        raise ValueError('InvalidTarget: Target Not Provided')
+    analyze = ''
+    record_types = ['A', 'AAAA', 'NS', 'CNAME', 'MX', 'PTR', 'SOA', 'TXT']
+    for records in track(record_types):
+        try:
+            answer = dns.resolver.resolve(target, records)
+            for server in answer:
+                st = server.to_text()
+                analyze += '\n'
+                analyze += records
+                analyze += ' : '
+                analyze += st
+        except dns.resolver.NoAnswer:
+            print('No record Found')
+            pass
+        except dns.resolver.NXDOMAIN:
+            print('NXDOMAIN record NOT Found')
+            pass
+        except KeyboardInterrupt:
+            print('Bye')
+            quit()
+    try:
+        response = DnsAI(key, analyze)
+        return str(response)
+    except KeyboardInterrupt:
+        print('Bye')
+        quit()
+

@@ -1,0 +1,176 @@
+@article{peng2023check,
+  title={Check your facts and try again: Improving large language models with external knowledge and automated feedback},
+  author={Peng, Baolin and Galley, Michel and He, Pengcheng and Cheng, Hao and Xie, Yujia and Hu, Yu and Huang, Qiuyuan and Liden, Lars and Yu, Zhou and Chen, Weizhu and others},
+  journal={arXiv preprint arXiv:2302.12813},
+  year={2023}
+}
+
+@article{jeong2024adaptive,
+  title={Adaptive-rag: Learning to adapt retrieval-augmented large language models through question complexity},
+  author={Jeong, Soyeong and Baek, Jinheon and Cho, Sukmin and Hwang, Sung Ju and Park, Jong C},
+  journal={arXiv preprint arXiv:2403.14403},
+  year={2024}
+}
+
+@article{patil2024gorilla,
+  title={Gorilla: Large language model connected with massive apis},
+  author={Patil, Shishir G and Zhang, Tianjun and Wang, Xin and Gonzalez, Joseph E},
+  journal={Advances in Neural Information Processing Systems},
+  volume={37},
+  pages={126544--126565},
+  year={2024}
+}
+
+@article{siriwardhana2023improving,
+  title={Improving the domain adaptation of retrieval augmented generation (RAG) models for open domain question answering},
+  author={Siriwardhana, Shamane and Weerasekera, Rivindu and Wen, Elliott and Kaluarachchi, Tharindu and Rana, Rajib and Nanayakkara, Suranga},
+  journal={Transactions of the Association for Computational Linguistics},
+  volume={11},
+  pages={1--17},
+  year={2023},
+  publisher={MIT Press One Broadway, 12th Floor, Cambridge, Massachusetts 02142, USA~…}
+}
+
+@article{ram2023context,
+  title={In-context retrieval-augmented language models},
+  author={Ram, Ori and Levine, Yoav and Dalmedigos, Itay and Muhlgay, Dor and Shashua, Amnon and Leyton-Brown, Kevin and Shoham, Yoav},
+  journal={Transactions of the Association for Computational Linguistics},
+  volume={11},
+  pages={1316--1331},
+  year={2023},
+  publisher={MIT Press One Broadway, 12th Floor, Cambridge, Massachusetts 02142, USA~…}
+}
+
+@article{pastor2021pattern,
+  title={Pattern-based algorithms for Explainable AI},
+  author={Pastor, Eliana},
+  year={2021},
+  publisher={Politecnico di Torino}
+}
+
+@article{luo2023reasoning,
+  title={Reasoning on graphs: Faithful and interpretable large language model reasoning},
+  author={Luo, Linhao and Li, Yuan-Fang and Haffari, Gholamreza and Pan, Shirui},
+  journal={arXiv preprint arXiv:2310.01061},
+  year={2023}
+}
+
+@article{zhang2024raft,
+  title={Raft: Adapting language model to domain specific rag},
+  author={Zhang, Tianjun and Patil, Shishir G and Jain, Naman and Shen, Sheng and Zaharia, Matei and Stoica, Ion and Gonzalez, Joseph E},
+  journal={arXiv preprint arXiv:2403.10131},
+  year={2024}
+}
+
+@article{jin2025ragcache,
+  title={Ragcache: Efficient knowledge caching for retrieval-augmented generation},
+  author={Jin, Chao and Zhang, Zili and Jiang, Xuanlin and Liu, Fangyue and Liu, Shufan and Liu, Xuanzhe and Jin, Xin},
+  journal={ACM Transactions on Computer Systems},
+  volume={44},
+  number={1},
+  pages={1--27},
+  year={2025},
+  publisher={ACM New York, NY}
+}
+
+@article{yu2024rankrag,
+  title={Rankrag: Unifying context ranking with retrieval-augmented generation in llms},
+  author={Yu, Yue and Ping, Wei and Liu, Zihan and Wang, Boxin and You, Jiaxuan and Zhang, Chao and Shoeybi, Mohammad and Catanzaro, Bryan},
+  journal={Advances in Neural Information Processing Systems},
+  volume={37},
+  pages={121156--121184},
+  year={2024}
+}
+
+@article{lewis2020retrieval,
+  title={Retrieval-augmented generation for knowledge-intensive nlp tasks},
+  author={Lewis, Patrick and Perez, Ethan and Piktus, Aleksandra and Petroni, Fabio and Karpukhin, Vladimir and Goyal, Naman and K{\"u}ttler, Heinrich and Lewis, Mike and Yih, Wen-tau and Rockt{\"a}schel, Tim and others},
+  journal={Advances in neural information processing systems},
+  volume={33},
+  pages={9459--9474},
+  year={2020}
+}
+
+@article{joren2024sufficient,
+  title={Sufficient context: A new lens on retrieval augmented generation systems},
+  author={Joren, Hailey and Zhang, Jianyi and Ferng, Chun-Sung and Juan, Da-Cheng and Taly, Ankur and Rashtchian, Cyrus},
+  journal={arXiv preprint arXiv:2411.06037},
+  year={2024}
+}
+
+@article{sun2023think,
+  title={Think-on-graph: Deep and responsible reasoning of large language model on knowledge graph},
+  author={Sun, Jiashuo and Xu, Chengjin and Tang, Lumingyuan and Wang, Saizhuo and Lin, Chen and Gong, Yeyun and Ni, Lionel M and Shum, Heung-Yeung and Guo, Jian},
+  journal={arXiv preprint arXiv:2307.07697},
+  year={2023}
+}
+
+@article{gou2023tora,
+  title={Tora: A tool-integrated reasoning agent for mathematical problem solving},
+  author={Gou, Zhibin and Shao, Zhihong and Gong, Yeyun and Shen, Yelong and Yang, Yujiu and Huang, Minlie and Duan, Nan and Chen, Weizhu},
+  journal={arXiv preprint arXiv:2309.17452},
+  year={2023}
+}
+
+@article{schulhoff2024prompt,
+  title={The prompt report: a systematic survey of prompt engineering techniques},
+  author={Schulhoff, Sander and Ilie, Michael and Balepur, Nishant and Kahadze, Konstantine and Liu, Amanda and Si, Chenglei and Li, Yinheng and Gupta, Aayush and Han, HyoJung and Schulhoff, Sevien and others},
+  journal={arXiv preprint arXiv:2406.06608},
+  year={2024}
+}
+
+@article{qin2024tool,
+  title={Tool learning with foundation models},
+  author={Qin, Yujia and Hu, Shengding and Lin, Yankai and Chen, Weize and Ding, Ning and Cui, Ganqu and Zeng, Zheni and Zhou, Xuanhe and Huang, Yufei and Xiao, Chaojun and others},
+  journal={ACM Computing Surveys},
+  volume={57},
+  number={4},
+  pages={1--40},
+  year={2024},
+  publisher={ACM New York, NY}
+}
+
+@article{qu2025tool,
+  title={Tool learning with large language models: A survey},
+  author={Qu, Changle and Dai, Sunhao and Wei, Xiaochi and Cai, Hengyi and Wang, Shuaiqiang and Yin, Dawei and Xu, Jun and Wen, Ji-Rong},
+  journal={Frontiers of Computer Science},
+  volume={19},
+  number={8},
+  pages={198343},
+  year={2025},
+  publisher={Springer}
+}
+
+@article{zhuang2023toolqa,
+  title={Toolqa: A dataset for llm question answering with external tools},
+  author={Zhuang, Yuchen and Yu, Yue and Wang, Kuan and Sun, Haotian and Zhang, Chao},
+  journal={Advances in Neural Information Processing Systems},
+  volume={36},
+  pages={50117--50143},
+  year={2023}
+}
+
+@article{xie2024travelplanner,
+  title={Travelplanner: A benchmark for real-world planning with language agents},
+  author={Xie, Jian and Zhang, Kai and Chen, Jiangjie and Zhu, Tinghui and Lou, Renze and Tian, Yuandong and Xiao, Yanghua and Su, Yu},
+  journal={arXiv preprint arXiv:2402.01622},
+  year={2024}
+}
+
+@article{nakano2021webgpt,
+  title={Webgpt: Browser-assisted question-answering with human feedback},
+  author={Nakano, Reiichiro and Hilton, Jacob and Balaji, Suchir and Wu, Jeff and Ouyang, Long and Kim, Christina and Hesse, Christopher and Jain, Shantanu and Kosaraju, Vineet and Saunders, William and others},
+  journal={arXiv preprint arXiv:2112.09332},
+  year={2021}
+}
+
+@article{chen2024large,
+  title={When large language models meet personalization: Perspectives of challenges and opportunities},
+  author={Chen, Jin and Liu, Zheng and Huang, Xu and Wu, Chenwang and Liu, Qi and Jiang, Gangwei and Pu, Yuanhao and Lei, Yuxuan and Chen, Xiaolong and Wang, Xingmei and others},
+  journal={World Wide Web},
+  volume={27},
+  number={4},
+  pages={42},
+  year={2024},
+  publisher={Springer}
+}

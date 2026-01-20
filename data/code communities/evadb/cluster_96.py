@@ -1,0 +1,173 @@
+# Cluster 96
+
+class StatementBinder:
+
+    def __init__(self, binder_context: StatementBinderContext):
+        self._binder_context = binder_context
+        self._catalog: Callable = binder_context._catalog
+
+    @singledispatchmethod
+    def bind(self, node):
+        raise NotImplementedError(f'Cannot bind {type(node)}')
+
+    @bind.register(AbstractStatement)
+    def _bind_abstract_statement(self, node: AbstractStatement):
+        pass
+
+    @bind.register(AbstractExpression)
+    def _bind_abstract_expr(self, node: AbstractExpression):
+        for child in node.children:
+            self.bind(child)
+
+    @bind.register(ExplainStatement)
+    def _bind_explain_statement(self, node: ExplainStatement):
+        self.bind(node.explainable_stmt)
+
+    @bind.register(CreateFunctionStatement)
+    def _bind_create_function_statement(self, node: CreateFunctionStatement):
+        if node.query is not None:
+            self.bind(node.query)
+            node.query.target_list = drop_row_id_from_target_list(node.query.target_list)
+            all_column_list = get_column_definition_from_select_target_list(node.query.target_list)
+            arg_map = {key: value for key, value in node.metadata}
+            inputs, outputs = ([], [])
+            if string_comparison_case_insensitive(node.function_type, 'ludwig'):
+                assert 'predict' in arg_map, f"Creating {node.function_type} functions expects 'predict' metadata."
+                predict_columns = set([arg_map['predict']])
+                for column in all_column_list:
+                    if column.name in predict_columns:
+                        column.name = column.name + '_predictions'
+                        outputs.append(column)
+                    else:
+                        inputs.append(column)
+            elif string_comparison_case_insensitive(node.function_type, 'sklearn') or string_comparison_case_insensitive(node.function_type, 'XGBoost'):
+                assert 'predict' in arg_map, f"Creating {node.function_type} functions expects 'predict' metadata."
+                predict_columns = set([arg_map['predict']])
+                for column in all_column_list:
+                    if column.name in predict_columns:
+                        outputs.append(column)
+                    else:
+                        inputs.append(column)
+            elif string_comparison_case_insensitive(node.function_type, 'forecasting'):
+                inputs = [ColumnDefinition('horizon', ColumnType.INTEGER, None, None)]
+                required_columns = set([arg_map.get('predict', 'y')])
+                for column in all_column_list:
+                    if column.name == arg_map.get('id', 'unique_id'):
+                        outputs.append(column)
+                    elif column.name == arg_map.get('time', 'ds'):
+                        outputs.append(column)
+                    elif column.name == arg_map.get('predict', 'y'):
+                        outputs.append(column)
+                        required_columns.remove(column.name)
+                assert len(required_columns) == 0, f'Missing required {required_columns} columns for forecasting function.'
+                outputs.extend([ColumnDefinition(arg_map.get('predict', 'y') + '-lo', ColumnType.FLOAT, None, None), ColumnDefinition(arg_map.get('predict', 'y') + '-hi', ColumnType.FLOAT, None, None)])
+            else:
+                raise BinderError(f'Unsupported type of function: {node.function_type}.')
+            assert len(node.inputs) == 0 and len(node.outputs) == 0, f"{node.function_type} functions' input and output are auto assigned"
+            node.inputs, node.outputs = (inputs, outputs)
+
+    @bind.register(SelectStatement)
+    def _bind_select_statement(self, node: SelectStatement):
+        if node.from_table:
+            self.bind(node.from_table)
+        if node.where_clause:
+            self.bind(node.where_clause)
+            if node.where_clause.etype == ExpressionType.COMPARE_LIKE:
+                check_column_name_is_string(node.where_clause.children[0])
+        if node.target_list:
+            if len(node.target_list) == 1 and isinstance(node.target_list[0], TupleValueExpression) and (node.target_list[0].name == '*'):
+                node.target_list = extend_star(self._binder_context)
+            for expr in node.target_list:
+                self.bind(expr)
+                if isinstance(expr, FunctionExpression):
+                    output_cols = get_bound_func_expr_outputs_as_tuple_value_expr(expr)
+                    self._binder_context.add_derived_table_alias(expr.alias.alias_name, output_cols)
+        if node.groupby_clause:
+            self.bind(node.groupby_clause)
+            check_table_object_is_groupable(node.from_table)
+            check_groupby_pattern(node.from_table, node.groupby_clause.value)
+        if node.orderby_list:
+            for expr in node.orderby_list:
+                self.bind(expr[0])
+        if node.union_link:
+            current_context = self._binder_context
+            self._binder_context = StatementBinderContext(self._catalog)
+            self.bind(node.union_link)
+            self._binder_context = current_context
+        if node.from_table and node.from_table.chunk_params:
+            assert is_document_table(node.from_table.table.table_obj), 'CHUNK related parameters only supported for DOCUMENT tables.'
+        assert not (self._binder_context.is_retrieve_audio() and self._binder_context.is_retrieve_video()), 'Cannot query over both audio and video streams'
+        if self._binder_context.is_retrieve_audio():
+            node.from_table.get_audio = True
+        if self._binder_context.is_retrieve_video():
+            node.from_table.get_video = True
+
+    @bind.register(DeleteTableStatement)
+    def _bind_delete_statement(self, node: DeleteTableStatement):
+        self.bind(node.table_ref)
+        if node.where_clause:
+            self.bind(node.where_clause)
+
+    @bind.register(CreateTableStatement)
+    def _bind_create_statement(self, node: CreateTableStatement):
+        for col in node.column_list:
+            assert col.name.lower() not in RESTRICTED_COL_NAMES, f'EvaDB does not allow to create a table with column name {col.name}'
+        if node.query is not None:
+            self.bind(node.query)
+            node.column_list = get_column_definition_from_select_target_list(node.query.target_list)
+
+    @bind.register(CreateIndexStatement)
+    def _bind_create_index_statement(self, node: CreateIndexStatement):
+        from evadb.binder.create_index_statement_binder import bind_create_index
+        bind_create_index(self, node)
+
+    @bind.register(RenameTableStatement)
+    def _bind_rename_table_statement(self, node: RenameTableStatement):
+        self.bind(node.old_table_ref)
+        assert node.old_table_ref.table.table_obj.table_type != TableType.STRUCTURED_DATA, 'Rename not yet supported on structured data'
+
+    @bind.register(TableRef)
+    def _bind_tableref(self, node: TableRef):
+        if node.is_table_atom():
+            self._binder_context.add_table_alias(node.alias.alias_name, node.table.database_name, node.table.table_name)
+            bind_table_info(self._catalog(), node.table)
+        elif node.is_select():
+            current_context = self._binder_context
+            self._binder_context = StatementBinderContext(self._catalog)
+            self.bind(node.select_statement)
+            self._binder_context = current_context
+            self._binder_context.add_derived_table_alias(node.alias.alias_name, node.select_statement.target_list)
+        elif node.is_join():
+            self.bind(node.join_node.left)
+            self.bind(node.join_node.right)
+            if node.join_node.predicate:
+                self.bind(node.join_node.predicate)
+        elif node.is_table_valued_expr():
+            func_expr = node.table_valued_expr.func_expr
+            func_expr.alias = node.alias
+            self.bind(func_expr)
+            output_cols = get_bound_func_expr_outputs_as_tuple_value_expr(func_expr)
+            self._binder_context.add_derived_table_alias(func_expr.alias.alias_name, output_cols)
+        else:
+            raise BinderError(f'Unsupported node {type(node)}')
+
+    @bind.register(TupleValueExpression)
+    def _bind_tuple_expr(self, node: TupleValueExpression):
+        from evadb.binder.tuple_value_expression_binder import bind_tuple_expr
+        bind_tuple_expr(self, node)
+
+    @bind.register(FunctionExpression)
+    def _bind_func_expr(self, node: FunctionExpression):
+        from evadb.binder.function_expression_binder import bind_func_expr
+        bind_func_expr(self, node)
+
+def bind_tuple_expr(binder: StatementBinder, node: TupleValueExpression):
+    table_alias, col_obj = binder._binder_context.get_binded_column(node.name, node.table_alias)
+    node.table_alias = table_alias
+    if node.name == VideoColumnName.audio:
+        binder._binder_context.enable_audio_retrieval()
+    if node.name == VideoColumnName.data:
+        binder._binder_context.enable_video_retrieval()
+    node.col_alias = '{}.{}'.format(table_alias, node.name.lower())
+    node.col_object = col_obj
+

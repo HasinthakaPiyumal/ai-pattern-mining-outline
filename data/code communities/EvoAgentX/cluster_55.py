@@ -1,0 +1,309 @@
+# Cluster 55
+
+class BaseLLM(ABC):
+    """Abstract base class for Large Language Model implementations.
+    
+    This class defines the interface that all LLM implementations must follow,
+    providing methods for generating text, formatting messages, and parsing output.
+    
+    Attributes:
+        config: Configuration for the LLM.
+        kwargs: Additional keyword arguments provided during initialization.
+    """
+
+    def __init__(self, config: LLMConfig, **kwargs):
+        """Initializes the LLM with configuration.
+        
+        Args:
+            config: Configuration object for the LLM.
+            **kwargs (Any): Additional keyword arguments.
+        """
+        self.config = config
+        self.kwargs = kwargs
+        self.init_model()
+
+    @abstractmethod
+    def init_model(self):
+        """Initializes the underlying model.
+        
+        This method should be implemented by subclasses to set up the actual LLM.
+        """
+        pass
+
+    def __deepcopy__(self, memo) -> 'BaseLLM':
+        """Handles deep copying of the LLM instance.
+        
+        Returns the same instance when deepcopy is called, as LLM instances
+        often cannot be meaningfully deep-copied.
+        
+        Args:
+            memo (Dict[int, Any]): Memo dictionary used by the deepcopy process.
+            
+        Returns:
+            The same LLM instance.
+        """
+        memo[id(self)] = self
+        return self
+
+    @abstractmethod
+    def formulate_messages(self, prompts: List[str], system_messages: Optional[List[str]]=None) -> List[List[dict]]:
+        """Converts input prompts into the chat format compatible with different LLMs.
+
+        Args:
+            prompts: A list of user prompts that need to be converted.
+            system_messages: An optional list of system messages that provide instructions or context to the model.
+        
+        Returns:
+            A list of message lists, where each inner list contains messages in the chat format required by LLMs. 
+        """
+        pass
+
+    @abstractmethod
+    def single_generate(self, messages: List[dict], **kwargs) -> str:
+        """Generates LLM output for a single set of messages.
+
+        Args:
+            messages: The input messages to the LLM in chat format.
+            **kwargs (Any): Additional keyword arguments for generation settings.
+        
+        Returns:
+            The generated output text from the LLM.
+        """
+        pass
+
+    @abstractmethod
+    def batch_generate(self, batch_messages: List[List[dict]], **kwargs) -> List[str]:
+        """Generates outputs for a batch of message sets.
+
+        Args: 
+            batch_messages: A list of message lists, where each inner list contains messages for a single generation.
+            **kwargs (Any): Additional keyword arguments for generation settings.
+        
+        Returns:
+            A list of generated outputs from the LLM, one for each input message set.
+        """
+        pass
+
+    async def single_generate_async(self, messages: List[dict], **kwargs) -> str:
+        """Asynchronously generates LLM output for a single set of messages.
+        
+        This default implementation wraps the synchronous method in an async executor.
+        Subclasses should override this for true async implementation if supported.
+        
+        Args:
+            messages: The input messages to the LLM in chat format.
+            **kwargs (Any): Additional keyword arguments for generation settings.
+        
+        Returns:
+            The generated output text from the LLM.
+        """
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(None, self.single_generate, messages, **kwargs)
+        return result
+
+    async def batch_generate_async(self, batch_messages: List[List[dict]], **kwargs) -> List[str]:
+        """Asynchronously generates outputs for a batch of message sets.
+        
+        This default implementation runs each generation as a separate async task.
+        Subclasses should override this for more efficient async batching if supported.
+        
+        Args: 
+            batch_messages: A list of message lists, where each inner list contains messages for a single generation.
+            **kwargs (Any): Additional keyword arguments for generation settings.
+        
+        Returns:
+            A list of generated outputs from the LLM, one for each input message set.
+        """
+        tasks = [self.single_generate_async(messages, **kwargs) for messages in batch_messages]
+        return await asyncio.gather(*tasks)
+
+    def parse_generated_text(self, text: str, parser: Optional[Type[LLMOutputParser]]=None, parse_mode: Optional[str]='json', parse_func: Optional[Callable]=None, **kwargs) -> LLMOutputParser:
+        """Parses generated text into a structured output using a parser.
+
+        Args: 
+            text: The text generated by the LLM.
+            parser: An LLMOutputParser class to use for parsing. If None, the default LLMOutputParser is used.
+            parse_mode: The mode to use for parsing, must be the `parse_mode` supported by the `parser`. 
+            **kwargs (Any): Additional arguments passed to the parser.
+        
+        Returns:
+            An LLMOutputParser instance containing the parsed data.
+        """
+        if not parser:
+            parser = LLMOutputParser
+        return parser.parse(text, parse_mode=parse_mode, parse_func=parse_func)
+
+    def parse_generated_texts(self, texts: List[str], parser: Optional[Type[LLMOutputParser]]=None, parse_mode: Optional[str]='json', parse_func: Optional[Callable]=None, **kwargs) -> List[LLMOutputParser]:
+        """Parses multiple generated texts into structured outputs.
+        
+        Args:
+            texts: A list of texts generated by the LLM.
+            parser: An LLMOutputParser class to use for parsing.
+            parse_mode: The mode to use for parsing, must be the `parse_mode` supported by the `parser`. 
+            **kwargs (Any): Additional arguments passed to the parser.
+            
+        Returns:
+            A list of LLMOutputParser instances containing the parsed data.
+        """
+        parsed_results = [self.parse_generated_text(text=text, parser=parser, parse_mode=parse_mode, parse_func=parse_func, **kwargs) for text in texts]
+        return parsed_results
+
+    def _prepare_messages(self, prompt: Optional[Union[str, List[str]]]=None, system_message: Optional[Union[str, List[str]]]=None, messages: Optional[Union[List[dict], List[List[dict]]]]=None) -> tuple[List[List[dict]], bool]:
+        """Prepares and validates input messages for generation.
+        
+        This internal method handles the various input formats (prompt strings, system messages,
+        or pre-formatted message dictionaries) and converts them to a consistent format for generation.
+        
+        Args:
+            prompt: Input prompt(s) to the LLM.
+            system_message: System message(s) for the LLM.
+            messages: Chat message(s) for the LLM, already in the required format.
+
+        Returns:
+            A tuple containing:
+            - prepared_messages: List of message lists ready for generation
+            - is_single_generate: Boolean indicating if this is a single generation (vs. batch)
+            
+        Raises:
+            ValueError: If neither prompt nor messages is provided, or if both are provided.
+            TypeError: If the inputs have inconsistent types or formats.
+        """
+        if not (prompt or messages):
+            raise ValueError("Either 'prompt' or 'messages' must be provided.")
+        if prompt and messages:
+            raise ValueError("Both 'prompt' and 'messages' are provided. Please provide only one of them.")
+        single_generate = False
+        if messages is not None:
+            if not messages:
+                return ([], False)
+            if isinstance(messages[0], dict):
+                single_generate = True
+                messages = [messages]
+            processed_messages = self._process_messages_for_multimodal(messages)
+            return (processed_messages, single_generate)
+        if isinstance(prompt, str):
+            single_generate = True
+            prompt = [prompt]
+            if system_message:
+                if not isinstance(system_message, str):
+                    raise TypeError(f"'system_message' should be a string when passing a single prompt, but found {type(system_message)}.")
+                system_message = [system_message]
+        elif isinstance(prompt, list) and all((isinstance(p, str) for p in prompt)):
+            single_generate = False
+            if not prompt:
+                return ([], False)
+            if system_message:
+                if not isinstance(system_message, list) or len(prompt) != len(system_message):
+                    raise ValueError(f"'system_message' should be a list of string when passing multiple prompts and the number of prompts ({len(prompt)}) must match the number of system messages ({len(system_message)}).")
+        else:
+            raise ValueError(f"'prompt' must be a str or List[str], but found {type(prompt)}.")
+        prepared_messages = self.formulate_messages(prompts=prompt, system_messages=system_message)
+        return (prepared_messages, single_generate)
+
+    def _process_messages_for_multimodal(self, messages: List[List[dict]]) -> List[List[dict]]:
+        """Process messages to handle multimodal content (TextChunk, ImageChunk)."""
+        processed_messages = []
+        for message_list in messages:
+            processed_message_list = []
+            for message in message_list:
+                processed_message = message.copy()
+                content = message.get('content')
+                if _is_multimodal_content(content):
+                    llm_type = getattr(self.config, 'llm_type', 'openai')
+                    if llm_type.lower() in ['openaillm', 'openai']:
+                        model_type = 'openai'
+                    elif llm_type.lower() in ['litellm']:
+                        model_type = 'litellm'
+                    elif llm_type.lower() in ['openrouter']:
+                        model_type = 'openrouter'
+                    else:
+                        model_type = 'openai'
+                    from ..core.logging import logger
+                    logger.debug(f'Processing multimodal content: llm_type={llm_type}, model_type={model_type}')
+                    if isinstance(content, list):
+                        processed_message['content'] = _process_multimodal_content(content, model_type)
+                    else:
+                        processed_message['content'] = _process_multimodal_content([content], model_type)
+                processed_message_list.append(processed_message)
+            processed_messages.append(processed_message_list)
+        return processed_messages
+
+    def generate(self, prompt: Optional[Union[str, List[str]]]=None, system_message: Optional[Union[str, List[str]]]=None, messages: Optional[Union[List[dict], List[List[dict]]]]=None, parser: Optional[Type[LLMOutputParser]]=None, parse_mode: Optional[str]='json', parse_func: Optional[Callable]=None, **kwargs) -> Union[LLMOutputParser, List[LLMOutputParser]]:
+        """Generates LLM output(s) and parses the result(s).
+        
+        This is the main method for generating text with the LLM. It handles both
+        single and batch generation, and automatically parses the outputs.
+        
+        Args:
+            prompt: Input prompt(s) to the LLM.
+            system_message: System message(s) for the LLM.
+            messages: Chat message(s) for the LLM, already in the required format (either `prompt` or `messages` must be provided).
+            parser: Parser class to use for processing the output.
+            parse_mode: The mode to use for parsing, must be the `parse_mode` supported by the `parser`. 
+            **kwargs (Any): Additional generation configuration parameters.
+        
+        Returns:
+            For single generation: An LLMOutputParser instance.
+            For batch generation: A list of LLMOutputParser instances.
+            
+        Raises:
+            ValueError: If the input format is invalid.
+            
+        Note:
+            Either prompt or messages must be provided. If both or neither is provided,
+            an error will be raised.
+        """
+        prepared_messages, single_generate = self._prepare_messages(prompt, system_message, messages)
+        if not prepared_messages:
+            return []
+        generated_texts = self.batch_generate(batch_messages=prepared_messages, **kwargs)
+        parsed_outputs = self.parse_generated_texts(texts=generated_texts, parser=parser, parse_mode=parse_mode, parse_func=parse_func, **kwargs)
+        return parsed_outputs[0] if single_generate else parsed_outputs
+
+    async def async_generate(self, prompt: Optional[Union[str, List[str]]]=None, system_message: Optional[Union[str, List[str]]]=None, messages: Optional[Union[List[dict], List[List[dict]]]]=None, parser: Optional[Type[LLMOutputParser]]=None, parse_mode: Optional[str]='json', parse_func: Optional[Callable]=None, **kwargs) -> Union[LLMOutputParser, List[LLMOutputParser]]:
+        """Asynchronously generates LLM output(s) and parses the result(s).
+        
+        This is the async version of the generate method. It works identically but
+        performs the generation asynchronously.
+        """
+        prepared_messages, single_generate = self._prepare_messages(prompt, system_message, messages)
+        if not prepared_messages:
+            return []
+        generated_texts = await self.batch_generate_async(batch_messages=prepared_messages, **kwargs)
+        parsed_outputs = self.parse_generated_texts(texts=generated_texts, parser=parser, parse_mode=parse_mode, parse_func=parse_func, **kwargs)
+        return parsed_outputs[0] if single_generate else parsed_outputs
+
+def _is_multimodal_content(content: Any) -> bool:
+    """Check if content contains multimodal objects (TextChunk, ImageChunk, etc.)."""
+    try:
+        from ..rag.schema import TextChunk, ImageChunk
+        if isinstance(content, list):
+            return any((isinstance(item, (TextChunk, ImageChunk)) for item in content))
+        elif isinstance(content, (TextChunk, ImageChunk)):
+            return True
+        return False
+    except ImportError:
+        return False
+
+def _process_multimodal_content(content: List[Any], model_type: str='openai') -> List[Dict[str, Any]]:
+    """Convert multimodal content (TextChunk, ImageChunk) to model-specific message format."""
+    try:
+        from ..rag.schema import TextChunk, ImageChunk
+    except ImportError:
+        raise ImportError('Cannot import TextChunk/ImageChunk from rag.schema for multimodal processing')
+    processed_content = []
+    for item in content:
+        if isinstance(item, TextChunk):
+            processed_content.append({'type': 'text', 'text': item.text})
+        elif isinstance(item, ImageChunk):
+            if model_type.lower() in ['openai', 'openrouter', 'litellm']:
+                image_data = _get_image_data_url(item)
+                processed_content.append({'type': 'image_url', 'image_url': {'url': image_data}})
+            else:
+                processed_content.append({'type': 'image', 'image_path': item.image_path, 'image_mimetype': item.image_mimetype})
+        elif isinstance(item, str):
+            processed_content.append({'type': 'text', 'text': item})
+        else:
+            processed_content.append({'type': 'text', 'text': str(item)})
+    return processed_content
+

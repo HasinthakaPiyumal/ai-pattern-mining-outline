@@ -1,0 +1,181 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        
+            
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/dist/vis-network.min.css" integrity="sha512-WgxfT5LWjfszlPHXRmBWHkV2eceiWTOBvrKCNbdgDYTHrT2AeLCGbF4sZlZw3UMN3WtL0tGUoIAKsu8mllg/XA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js" integrity="sha512-LnvoEWDFrqGHlHmDD2101OrLcbsfkrzoSpvtSQtxK3RMnRV0eOkhhBN2dXHKRrUU8p2DGRTk35n4O8nWSVe1mQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+        
+<center>
+<h1></h1>
+</center>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6"
+          crossorigin="anonymous"
+        />
+        <script
+          src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
+          crossorigin="anonymous"
+        ></script>
+
+
+        <center>
+          <h1></h1>
+        </center>
+        <style type="text/css">
+
+             #mynetwork {
+                 width: 100%;
+                 height: 100vh;
+                 background-color: #FFFFFF;
+                 border: 1px solid lightgray;
+                 position: relative;
+                 float: left;
+             }
+
+             
+
+             
+             #config {
+                 float: left;
+                 width: 400px;
+                 height: 600px;
+             }
+             
+
+             
+        </style>
+    </head>
+
+
+    <body>
+        <div class="card" style="width: 100%">
+            
+            
+            <div id="mynetwork" class="card-body"></div>
+        </div>
+
+        
+        
+            <div id="config"></div>
+        
+
+        <script type="text/javascript">
+
+              // initialize global variables.
+              var edges;
+              var nodes;
+              var allNodes;
+              var allEdges;
+              var nodeColors;
+              var originalNodes;
+              var network;
+              var container;
+              var options, data;
+              var filter = {
+                  item : '',
+                  property : '',
+                  value : []
+              };
+
+              
+
+              
+
+              // This method is responsible for drawing the graph, returns the drawn network
+              function drawGraph() {
+                  var container = document.getElementById('mynetwork');
+
+                  
+
+                  // parsing and collecting nodes and edges from the python
+                  nodes = new vis.DataSet([{"color": "#EF476F", "font": {"color": "black"}, "id": "loader.py:setup_vectordb", "label": "setup_vectordb", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e loader.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e setup_vectordb"}, {"color": "#06D6A0", "font": {"color": "black"}, "id": "vigil/core/vectordb.py:VectorDB", "label": "VectorDB", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e vigil/core/vectordb.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e VectorDB"}, {"color": "#EF476F", "font": {"color": "black"}, "id": "loader.py:\u003cmodule\u003e", "label": "\u003cmodule\u003e", "shape": "dot", "size": 18, "title": "\u003cb\u003eFile:\u003c/b\u003e loader.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e \u003cmodule\u003e"}, {"color": "#118AB2", "font": {"color": "black"}, "id": "vigil/core/config.py:Config", "label": "Config", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e vigil/core/config.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e Config"}, {"color": "#FFD166", "font": {"color": "black"}, "id": "vigil/core/loader.py:Loader", "label": "Loader", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e vigil/core/loader.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e Loader"}, {"color": "#073B4C", "font": {"color": "black"}, "id": "vigil-server.py:add_canary", "label": "add_canary", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e vigil-server.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e add_canary"}, {"color": "#073B4C", "font": {"color": "black"}, "id": "vigil-server.py:check_field", "label": "check_field", "shape": "dot", "size": 22, "title": "\u003cb\u003eFile:\u003c/b\u003e vigil-server.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e check_field"}, {"color": "#9B5DE5", "font": {"color": "black"}, "id": "vigil/common.py:timestamp_str", "label": "timestamp_str", "shape": "dot", "size": 20, "title": "\u003cb\u003eFile:\u003c/b\u003e vigil/common.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e timestamp_str"}, {"color": "#073B4C", "font": {"color": "black"}, "id": "vigil-server.py:check_canary", "label": "check_canary", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e vigil-server.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e check_canary"}, {"color": "#073B4C", "font": {"color": "black"}, "id": "vigil-server.py:add_texts", "label": "add_texts", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e vigil-server.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e add_texts"}, {"color": "#073B4C", "font": {"color": "black"}, "id": "vigil-server.py:analyze_response", "label": "analyze_response", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e vigil-server.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e analyze_response"}, {"color": "#073B4C", "font": {"color": "black"}, "id": "vigil-server.py:analyze_prompt", "label": "analyze_prompt", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e vigil-server.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e analyze_prompt"}, {"color": "#073B4C", "font": {"color": "black"}, "id": "vigil-server.py:\u003cmodule\u003e", "label": "\u003cmodule\u003e", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e vigil-server.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e \u003cmodule\u003e"}, {"color": "#F15BB5", "font": {"color": "black"}, "id": "vigil/vigil.py:from_config", "label": "from_config", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e vigil/vigil.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e from_config"}, {"color": "#00BBF9", "font": {"color": "black"}, "id": "vigil/core/cache.py:LRUCache", "label": "LRUCache", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e vigil/core/cache.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e LRUCache"}, {"color": "#00F5D4", "font": {"color": "black"}, "id": "scripts/tests.py:\u003cmodule\u003e", "label": "\u003cmodule\u003e", "shape": "dot", "size": 20, "title": "\u003cb\u003eFile:\u003c/b\u003e scripts/tests.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e \u003cmodule\u003e"}, {"color": "#00F5D4", "font": {"color": "black"}, "id": "scripts/tests.py:test_input_scanner", "label": "test_input_scanner", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e scripts/tests.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e test_input_scanner"}, {"color": "#00F5D4", "font": {"color": "black"}, "id": "scripts/tests.py:test_output_scanner", "label": "test_output_scanner", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e scripts/tests.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e test_output_scanner"}, {"color": "#00F5D4", "font": {"color": "black"}, "id": "scripts/tests.py:test_canary_tokens", "label": "test_canary_tokens", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e scripts/tests.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e test_canary_tokens"}, {"color": "#FEE440", "font": {"color": "black"}, "id": "vigil/dispatch.py:Manager.perform_scan", "label": "Manager.perform_scan", "shape": "dot", "size": 18, "title": "\u003cb\u003eFile:\u003c/b\u003e vigil/dispatch.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e Manager.perform_scan"}, {"color": "#FF7D00", "font": {"color": "black"}, "id": "vigil/schema.py:ResponseModel", "label": "ResponseModel", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e vigil/schema.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e ResponseModel"}, {"color": "#FEE440", "font": {"color": "black"}, "id": "vigil/dispatch.py:calculate_entropy", "label": "calculate_entropy", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e vigil/dispatch.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e calculate_entropy"}, {"color": "#FEE440", "font": {"color": "black"}, "id": "vigil/dispatch.py:Scanner.run", "label": "Scanner.run", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e vigil/dispatch.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e Scanner.run"}, {"color": "#FF7D00", "font": {"color": "black"}, "id": "vigil/schema.py:ScanModel", "label": "ScanModel", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e vigil/schema.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e ScanModel"}, {"color": "#F15BB5", "font": {"color": "black"}, "id": "vigil/vigil.py:Vigil.__init__", "label": "Vigil.__init__", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e vigil/vigil.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e Vigil.__init__"}, {"color": "#FF006E", "font": {"color": "black"}, "id": "vigil/core/canary.py:CanaryTokens", "label": "CanaryTokens", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e vigil/core/canary.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e CanaryTokens"}, {"color": "#F15BB5", "font": {"color": "black"}, "id": "vigil/vigil.py:Vigil._initialize_embedder", "label": "Vigil._initialize_embedder", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e vigil/vigil.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e Vigil._initialize_embedder"}, {"color": "#EF476F", "font": {"color": "black"}, "id": "vigil/core/embedding.py:Embedder", "label": "Embedder", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e vigil/core/embedding.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e Embedder"}, {"color": "#F15BB5", "font": {"color": "black"}, "id": "vigil/vigil.py:Vigil._initialize_vectordb", "label": "Vigil._initialize_vectordb", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e vigil/vigil.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e Vigil._initialize_vectordb"}, {"color": "#F15BB5", "font": {"color": "black"}, "id": "vigil/vigil.py:Vigil._setup_scanners", "label": "Vigil._setup_scanners", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e vigil/vigil.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e Vigil._setup_scanners"}, {"color": "#06D6A0", "font": {"color": "black"}, "id": "vigil/registry.py:get_scanner_metadata", "label": "get_scanner_metadata", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e vigil/registry.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e get_scanner_metadata"}, {"color": "#06D6A0", "font": {"color": "black"}, "id": "vigil/registry.py:create_scanner", "label": "create_scanner", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e vigil/registry.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e create_scanner"}, {"color": "#F15BB5", "font": {"color": "black"}, "id": "vigil/vigil.py:Vigil._create_manager", "label": "Vigil._create_manager", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e vigil/vigil.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e Vigil._create_manager"}, {"color": "#FEE440", "font": {"color": "black"}, "id": "vigil/dispatch.py:Manager", "label": "Manager", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e vigil/dispatch.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e Manager"}, {"color": "#118AB2", "font": {"color": "black"}, "id": "vigil/scanners/yara.py:YaraScanner.analyze", "label": "YaraScanner.analyze", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e vigil/scanners/yara.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e YaraScanner.analyze"}, {"color": "#FF7D00", "font": {"color": "black"}, "id": "vigil/schema.py:YaraMatch", "label": "YaraMatch", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e vigil/schema.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e YaraMatch"}, {"color": "#118AB2", "font": {"color": "black"}, "id": "vigil/scanners/yara.py:\u003cmodule\u003e", "label": "\u003cmodule\u003e", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e vigil/scanners/yara.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e \u003cmodule\u003e"}, {"color": "#06D6A0", "font": {"color": "black"}, "id": "vigil/registry.py:scanner", "label": "scanner", "shape": "dot", "size": 22, "title": "\u003cb\u003eFile:\u003c/b\u003e vigil/registry.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e scanner"}, {"color": "#FFD166", "font": {"color": "black"}, "id": "vigil/scanners/sentiment.py:SentimentScanner.analyze", "label": "SentimentScanner.analyze", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e vigil/scanners/sentiment.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e SentimentScanner.analyze"}, {"color": "#FF7D00", "font": {"color": "black"}, "id": "vigil/schema.py:SentimentMatch", "label": "SentimentMatch", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e vigil/schema.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e SentimentMatch"}, {"color": "#FFD166", "font": {"color": "black"}, "id": "vigil/scanners/sentiment.py:\u003cmodule\u003e", "label": "\u003cmodule\u003e", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e vigil/scanners/sentiment.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e \u003cmodule\u003e"}, {"color": "#073B4C", "font": {"color": "black"}, "id": "vigil/scanners/transformer.py:TransformerScanner.analyze", "label": "TransformerScanner.analyze", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e vigil/scanners/transformer.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e TransformerScanner.analyze"}, {"color": "#FF7D00", "font": {"color": "black"}, "id": "vigil/schema.py:ModelMatch", "label": "ModelMatch", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e vigil/schema.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e ModelMatch"}, {"color": "#073B4C", "font": {"color": "black"}, "id": "vigil/scanners/transformer.py:\u003cmodule\u003e", "label": "\u003cmodule\u003e", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e vigil/scanners/transformer.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e \u003cmodule\u003e"}, {"color": "#9B5DE5", "font": {"color": "black"}, "id": "vigil/scanners/similarity.py:SimilarityScanner.analyze", "label": "SimilarityScanner.analyze", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e vigil/scanners/similarity.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e SimilarityScanner.analyze"}, {"color": "#EF476F", "font": {"color": "black"}, "id": "vigil/core/embedding.py:cosine_similarity", "label": "cosine_similarity", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e vigil/core/embedding.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e cosine_similarity"}, {"color": "#FF7D00", "font": {"color": "black"}, "id": "vigil/schema.py:SimilarityMatch", "label": "SimilarityMatch", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e vigil/schema.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e SimilarityMatch"}, {"color": "#9B5DE5", "font": {"color": "black"}, "id": "vigil/scanners/similarity.py:\u003cmodule\u003e", "label": "\u003cmodule\u003e", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e vigil/scanners/similarity.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e \u003cmodule\u003e"}, {"color": "#F15BB5", "font": {"color": "black"}, "id": "vigil/scanners/relevance.py:RelevanceScanner.__init__", "label": "RelevanceScanner.__init__", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e vigil/scanners/relevance.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e RelevanceScanner.__init__"}, {"color": "#00BBF9", "font": {"color": "black"}, "id": "vigil/core/llm.py:LLM", "label": "LLM", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e vigil/core/llm.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e LLM"}, {"color": "#00F5D4", "font": {"color": "black"}, "id": "vigil/scanners/vectordb.py:VectorScanner.analyze", "label": "VectorScanner.analyze", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e vigil/scanners/vectordb.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e VectorScanner.analyze"}, {"color": "#FF7D00", "font": {"color": "black"}, "id": "vigil/schema.py:VectorMatch", "label": "VectorMatch", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e vigil/schema.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e VectorMatch"}, {"color": "#00F5D4", "font": {"color": "black"}, "id": "vigil/scanners/vectordb.py:\u003cmodule\u003e", "label": "\u003cmodule\u003e", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e vigil/scanners/vectordb.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e \u003cmodule\u003e"}, {"color": "#FFD166", "font": {"color": "black"}, "id": "vigil/core/loader.py:Loader.load_dataset", "label": "Loader.load_dataset", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e vigil/core/loader.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e Loader.load_dataset"}, {"color": "#FF7D00", "font": {"color": "black"}, "id": "vigil/schema.py:DatasetEntry", "label": "DatasetEntry", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e vigil/schema.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e DatasetEntry"}, {"color": "#06D6A0", "font": {"color": "black"}, "id": "vigil/core/vectordb.py:VectorDB.add_texts", "label": "VectorDB.add_texts", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e vigil/core/vectordb.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e VectorDB.add_texts"}, {"color": "#9B5DE5", "font": {"color": "black"}, "id": "vigil/common.py:uuid4_str", "label": "uuid4_str", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e vigil/common.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e uuid4_str"}, {"color": "#06D6A0", "font": {"color": "black"}, "id": "vigil/core/vectordb.py:VectorDB.add_embeddings", "label": "VectorDB.add_embeddings", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e vigil/core/vectordb.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e VectorDB.add_embeddings"}]);
+                  edges = new vis.DataSet([{"arrows": "to", "color": "#666666", "from": "loader.py:setup_vectordb", "to": "vigil/core/vectordb.py:VectorDB", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "loader.py:\u003cmodule\u003e", "to": "vigil/core/config.py:Config", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "loader.py:\u003cmodule\u003e", "to": "loader.py:setup_vectordb", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "loader.py:\u003cmodule\u003e", "to": "vigil/core/loader.py:Loader", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "vigil-server.py:add_canary", "to": "vigil-server.py:check_field", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "vigil-server.py:add_canary", "to": "vigil/common.py:timestamp_str", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "vigil-server.py:check_canary", "to": "vigil-server.py:check_field", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "vigil-server.py:check_canary", "to": "vigil/common.py:timestamp_str", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "vigil-server.py:add_texts", "to": "vigil-server.py:check_field", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "vigil-server.py:add_texts", "to": "vigil/common.py:timestamp_str", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "vigil-server.py:analyze_response", "to": "vigil-server.py:check_field", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "vigil-server.py:analyze_prompt", "to": "vigil-server.py:check_field", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "vigil-server.py:\u003cmodule\u003e", "to": "vigil/vigil.py:from_config", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "vigil-server.py:\u003cmodule\u003e", "to": "vigil/core/cache.py:LRUCache", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "scripts/tests.py:\u003cmodule\u003e", "to": "vigil/vigil.py:from_config", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "scripts/tests.py:\u003cmodule\u003e", "to": "scripts/tests.py:test_input_scanner", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "scripts/tests.py:\u003cmodule\u003e", "to": "scripts/tests.py:test_output_scanner", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "scripts/tests.py:\u003cmodule\u003e", "to": "scripts/tests.py:test_canary_tokens", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "vigil/dispatch.py:Manager.perform_scan", "to": "vigil/schema.py:ResponseModel", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "vigil/dispatch.py:Manager.perform_scan", "to": "vigil/dispatch.py:calculate_entropy", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "vigil/dispatch.py:Manager.perform_scan", "to": "vigil/common.py:timestamp_str", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "vigil/dispatch.py:Scanner.run", "to": "vigil/schema.py:ScanModel", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "vigil/vigil.py:Vigil.__init__", "to": "vigil/core/config.py:Config", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "vigil/vigil.py:Vigil.__init__", "to": "vigil/core/canary.py:CanaryTokens", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "vigil/vigil.py:Vigil._initialize_embedder", "to": "vigil/core/embedding.py:Embedder", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "vigil/vigil.py:Vigil._initialize_vectordb", "to": "vigil/core/vectordb.py:VectorDB", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "vigil/vigil.py:Vigil._setup_scanners", "to": "vigil/registry.py:get_scanner_metadata", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "vigil/vigil.py:Vigil._setup_scanners", "to": "vigil/registry.py:create_scanner", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "vigil/vigil.py:Vigil._create_manager", "to": "vigil/dispatch.py:Manager", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "vigil/scanners/yara.py:YaraScanner.analyze", "to": "vigil/schema.py:YaraMatch", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "vigil/scanners/yara.py:\u003cmodule\u003e", "to": "vigil/registry.py:scanner", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "vigil/scanners/sentiment.py:SentimentScanner.analyze", "to": "vigil/schema.py:SentimentMatch", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "vigil/scanners/sentiment.py:\u003cmodule\u003e", "to": "vigil/registry.py:scanner", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "vigil/scanners/transformer.py:TransformerScanner.analyze", "to": "vigil/schema.py:ModelMatch", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "vigil/scanners/transformer.py:\u003cmodule\u003e", "to": "vigil/registry.py:scanner", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "vigil/scanners/similarity.py:SimilarityScanner.analyze", "to": "vigil/core/embedding.py:cosine_similarity", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "vigil/scanners/similarity.py:SimilarityScanner.analyze", "to": "vigil/schema.py:SimilarityMatch", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "vigil/scanners/similarity.py:\u003cmodule\u003e", "to": "vigil/registry.py:scanner", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "vigil/scanners/relevance.py:RelevanceScanner.__init__", "to": "vigil/core/llm.py:LLM", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "vigil/scanners/vectordb.py:VectorScanner.analyze", "to": "vigil/schema.py:VectorMatch", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "vigil/scanners/vectordb.py:\u003cmodule\u003e", "to": "vigil/registry.py:scanner", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "vigil/core/loader.py:Loader.load_dataset", "to": "vigil/schema.py:DatasetEntry", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "vigil/core/vectordb.py:VectorDB.add_texts", "to": "vigil/common.py:uuid4_str", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "vigil/core/vectordb.py:VectorDB.add_embeddings", "to": "vigil/common.py:uuid4_str", "width": 1.4}]);
+
+                  nodeColors = {};
+                  allNodes = nodes.get({ returnType: "Object" });
+                  for (nodeId in allNodes) {
+                    nodeColors[nodeId] = allNodes[nodeId].color;
+                  }
+                  allEdges = edges.get({ returnType: "Object" });
+                  // adding nodes and edges to the graph
+                  data = {nodes: nodes, edges: edges};
+
+                  var options = {
+    "configure": {
+        "enabled": true,
+        "filter": [
+            "physics"
+        ]
+    },
+    "edges": {
+        "color": {
+            "inherit": true
+        },
+        "smooth": {
+            "enabled": true,
+            "type": "dynamic"
+        }
+    },
+    "interaction": {
+        "dragNodes": true,
+        "hideEdgesOnDrag": false,
+        "hideNodesOnDrag": false
+    },
+    "physics": {
+        "barnesHut": {
+            "avoidOverlap": 0,
+            "centralGravity": 0.25,
+            "damping": 0.09,
+            "gravitationalConstant": -5000,
+            "springConstant": 0.02,
+            "springLength": 150
+        },
+        "enabled": true,
+        "stabilization": {
+            "enabled": true,
+            "fit": true,
+            "iterations": 1000,
+            "onlyDynamicEdges": false,
+            "updateInterval": 50
+        }
+    }
+};
+
+                  
+
+
+                  
+                  // if this network requires displaying the configure window,
+                  // put it in its div
+                  options.configure["container"] = document.getElementById("config");
+                  
+
+                  network = new vis.Network(container, data, options);
+
+                  
+
+                  
+
+                  
+
+
+                  
+
+                  return network;
+
+              }
+              drawGraph();
+        </script>
+    
+<script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+
+</body>
+</html>

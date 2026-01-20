@@ -1,0 +1,5 @@
+Generated code for project architecture, state the code file for realworld application,there can be multiple files,but i want all files in single code.Use suitable libraries and frameworks if needed.Don't add any comment or doc string.Just actual code only. 
+
+Here is the project architecture:
+
+{project_architecture}

@@ -1,0 +1,6 @@
+Define a realworld AI application idea to implement This AI pattern. Choose random relevant domain. It must be like actual application.
+here is some domains: E-commerce, Healthcare, Finance, Education, Social Media, Travel, Real Estate, Entertainment, Food Delivery, Fitness, News Aggregation, Project Management, Customer Support, Event Planning, Job Recruitment, Online Learning, Personal Finance, Blogging Platform, Music Streaming, Video Sharing, Virtual Events, Remote Work Collaboration.
+
+Here is a pattern description:
+       
+{pattern_description}

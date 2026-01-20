@@ -1,0 +1,882 @@
+# Cluster 63
+
+class NuPlanRoadBlock(RoadBlockGraphEdgeMapObject):
+    """
+    NuPlanMap implementation of Roadblock.
+    """
+
+    def __init__(self, roadblock_id: str, lanes_df: VectorLayer, lane_connectors_df: VectorLayer, baseline_paths_df: VectorLayer, boundaries_df: VectorLayer, roadblocks_df: VectorLayer, roadblock_connectors_df: VectorLayer, stop_lines_df: VectorLayer, intersections_df: VectorLayer, lane_connector_polygon_df: VectorLayer, map_data: AbstractMap):
+        """
+        Constructor of NuPlanRoadBlock.
+        :param roadblock_id: unique identifier of the roadblock.
+        :param lanes_df: the geopandas GeoDataframe that contains all lanes in the map.
+        :param lane_connectors_df: the geopandas GeoDataframe that contains all lane connectors in the map.
+        :param baseline_paths_df: the geopandas GeoDataframe that contains all baselines in the map.
+        :param boundaries_df: the geopandas GeoDataframe that contains all boundaries in the map.
+        :param roadblocks_df: the geopandas GeoDataframe that contains all roadblocks (lane groups) in the map.
+        :param roadblock_connectors_df: the geopandas GeoDataframe that contains all roadblock connectors (lane group
+            connectors) in the map.
+        :param stop_lines_df: the geopandas GeoDataframe that contains all stop lines in the map.
+        :param lane_connector_polygon_df: the geopandas GeoDataframe that contains polygons for lane connectors.
+        """
+        super().__init__(roadblock_id)
+        self._lanes_df = lanes_df
+        self._lane_connectors_df = lane_connectors_df
+        self._baseline_paths_df = baseline_paths_df
+        self._boundaries_df = boundaries_df
+        self._roadblocks_df = roadblocks_df
+        self._roadblock_connectors_df = roadblock_connectors_df
+        self._stop_lines_df = stop_lines_df
+        self._intersections_df = intersections_df
+        self._lane_connector_polygon_df = lane_connector_polygon_df
+        self._roadblock = None
+        self._map_data = map_data
+
+    @cached_property
+    def incoming_edges(self) -> List[RoadBlockGraphEdgeMapObject]:
+        """Inherited from superclass."""
+        roadblock_connectors_ids = get_all_rows_with_value(self._roadblock_connectors_df, 'to_lane_group_fid', self.id)['fid']
+        return [roadblock_connector.NuPlanRoadBlockConnector(str(roadblock_connector_id), self._lanes_df, self._lane_connectors_df, self._baseline_paths_df, self._boundaries_df, self._roadblocks_df, self._roadblock_connectors_df, self._stop_lines_df, self._intersections_df, self._lane_connector_polygon_df, self._map_data) for roadblock_connector_id in roadblock_connectors_ids.tolist()]
+
+    @cached_property
+    def outgoing_edges(self) -> List[RoadBlockGraphEdgeMapObject]:
+        """Inherited from superclass."""
+        roadblock_connectors_ids = get_all_rows_with_value(self._roadblock_connectors_df, 'from_lane_group_fid', self.id)['fid']
+        return [roadblock_connector.NuPlanRoadBlockConnector(str(roadblock_connector_id), self._lanes_df, self._lane_connectors_df, self._baseline_paths_df, self._boundaries_df, self._roadblocks_df, self._roadblock_connectors_df, self._stop_lines_df, self._intersections_df, self._lane_connector_polygon_df, self._map_data) for roadblock_connector_id in roadblock_connectors_ids.to_list()]
+
+    @cached_property
+    def interior_edges(self) -> List[LaneGraphEdgeMapObject]:
+        """Inherited from superclass."""
+        lane_ids = get_all_rows_with_value(self._lanes_df, 'lane_group_fid', self.id)['fid']
+        return [NuPlanLane(str(lane_id), self._lanes_df, self._lane_connectors_df, self._baseline_paths_df, self._boundaries_df, self._stop_lines_df, self._lane_connector_polygon_df, self._map_data) for lane_id in lane_ids.to_list()]
+
+    @cached_property
+    def polygon(self) -> Polygon:
+        """Inherited from superclass."""
+        return self._get_roadblock().geometry
+
+    @cached_property
+    def children_stop_lines(self) -> List[StopLine]:
+        """Inherited from superclass."""
+        raise NotImplementedError
+
+    @cached_property
+    def parallel_edges(self) -> List[RoadBlockGraphEdgeMapObject]:
+        """Inherited from superclass."""
+        raise NotImplementedError
+
+    def _get_roadblock(self) -> pd.Series:
+        """
+        Gets the series from the roadblock dataframe containing roadblock's id.
+        :return: the respective series from the roadblocks dataframe.
+        """
+        if self._roadblock is None:
+            self._roadblock = get_row_with_value(self._roadblocks_df, 'fid', self.id)
+        return self._roadblock
+
+def get_all_rows_with_value(elements: gpd.geodataframe.GeoDataFrame, column_label: str, desired_value: str) -> gpd.geodataframe.GeoDataFrame:
+    """
+    Extract all matching elements. Note, if no matching desired_key is found and empty list is returned.
+    :param elements: data frame from MapsDb.
+    :param column_label: key to extract from a column.
+    :param desired_value: key which is compared with the values of column_label entry.
+    :return: a subset of the original GeoDataFrame containing the matching key.
+    """
+    return elements.iloc[np.where(elements[column_label].to_numpy().astype(int) == int(desired_value))]
+
+def get_row_with_value(elements: gpd.geodataframe.GeoDataFrame, column_label: str, desired_value: str) -> pd.Series:
+    """
+    Extract a matching element.
+    :param elements: data frame from MapsDb.
+    :param column_label: key to extract from a column.
+    :param desired_value: key which is compared with the values of column_label entry.
+    :return row from GeoDataFrame.
+    """
+    if column_label == 'fid':
+        return elements.loc[desired_value]
+    matching_rows = get_all_rows_with_value(elements, column_label, desired_value)
+    assert len(matching_rows) > 0, f'Could not find the desired key = {desired_value}'
+    assert len(matching_rows) == 1, f'{len(matching_rows)} matching keys found. Expected to only find one.Try using get_all_rows_with_value'
+    return matching_rows.iloc[0]
+
+class NuPlanLane(Lane):
+    """
+    NuPlanMap implementation of Lane.
+    """
+
+    def __init__(self, lane_id: str, lanes_df: VectorLayer, lane_connectors_df: VectorLayer, baseline_paths_df: VectorLayer, boundaries_df: VectorLayer, stop_lines_df: VectorLayer, lane_connector_polygon_df: VectorLayer, map_data: AbstractMap):
+        """
+        Constructor of NuPlanLane.
+        :param lane_id: unique identifier of the lane.
+        :param lanes_df: the geopandas GeoDataframe that contains all lanes in the map.
+        :param lane_connectors_df: the geopandas GeoDataframe that contains all lane connectors in the map.
+        :param baseline_paths_df: the geopandas GeoDataframe that contains all baselines in the map.
+        :param boundaries_df: the geopandas GeoDataframe that contains all boundaries in the map.
+        :param stop_lines_df: the geopandas GeoDataframe that contains all stop lines in the map.
+        :param lane_connector_polygon_df: the geopandas GeoDataframe that contains polygons for lane connectors.
+        """
+        super().__init__(lane_id)
+        self._lanes_df = lanes_df
+        self._lane_connectors_df = lane_connectors_df
+        self._baseline_paths_df = baseline_paths_df
+        self._boundaries_df = boundaries_df
+        self._stop_lines_df = stop_lines_df
+        self._lane_connector_polygon_df = lane_connector_polygon_df
+        self._lane = None
+        self._map_data = map_data
+
+    @cached_property
+    def incoming_edges(self) -> List[LaneGraphEdgeMapObject]:
+        """Inherited from superclass."""
+        lane_connectors_ids = get_all_rows_with_value(self._lane_connectors_df, 'entry_lane_fid', self.id)['fid']
+        return [lane_connector.NuPlanLaneConnector(lane_connector_id, self._lanes_df, self._lane_connectors_df, self._baseline_paths_df, self._boundaries_df, self._stop_lines_df, self._lane_connector_polygon_df, self._map_data) for lane_connector_id in lane_connectors_ids.tolist()]
+
+    @cached_property
+    def outgoing_edges(self) -> List[LaneGraphEdgeMapObject]:
+        """Inherited from superclass."""
+        lane_connectors_ids = get_all_rows_with_value(self._lane_connectors_df, 'exit_lane_fid', self.id)['fid']
+        return [lane_connector.NuPlanLaneConnector(lane_connector_id, self._lanes_df, self._lane_connectors_df, self._baseline_paths_df, self._boundaries_df, self._stop_lines_df, self._lane_connector_polygon_df, self._map_data) for lane_connector_id in lane_connectors_ids.to_list()]
+
+    @cached_property
+    def parallel_edges(self) -> List[LaneGraphEdgeMapObject]:
+        """Inherited from superclass"""
+        raise NotImplementedError
+
+    @cached_property
+    def baseline_path(self) -> PolylineMapObject:
+        """Inherited from superclass."""
+        return NuPlanPolylineMapObject(get_row_with_value(self._baseline_paths_df, 'lane_fid', self.id))
+
+    @cached_property
+    def left_boundary(self) -> PolylineMapObject:
+        """Inherited from superclass."""
+        boundary_fid = self._get_lane()['left_boundary_fid']
+        return NuPlanPolylineMapObject(get_row_with_value(self._boundaries_df, 'fid', str(boundary_fid)))
+
+    @cached_property
+    def right_boundary(self) -> PolylineMapObject:
+        """Inherited from superclass."""
+        boundary_fid = self._get_lane()['right_boundary_fid']
+        return NuPlanPolylineMapObject(get_row_with_value(self._boundaries_df, 'fid', str(boundary_fid)))
+
+    def get_roadblock_id(self) -> str:
+        """Inherited from superclass."""
+        return str(self._get_lane()['lane_group_fid'])
+
+    @cached_property
+    def parent(self) -> RoadBlockGraphEdgeMapObject:
+        """Inherited from superclass"""
+        return self._map_data.get_map_object(self.get_roadblock_id(), SemanticMapLayer.ROADBLOCK)
+
+    @cached_property
+    def speed_limit_mps(self) -> Optional[float]:
+        """Inherited from superclass."""
+        speed_limit = self._get_lane()['speed_limit_mps']
+        is_valid = speed_limit == speed_limit and speed_limit is not None
+        return float(speed_limit) if is_valid else None
+
+    @cached_property
+    def polygon(self) -> Polygon:
+        """Inherited from superclass."""
+        return self._get_lane().geometry
+
+    def is_left_of(self, other: Lane) -> bool:
+        """Inherited from superclass."""
+        assert self.is_same_roadblock(other), 'Lanes must be in the same roadblock'
+        other_lane = get_row_with_value(self._lanes_df, 'fid', other.id)
+        other_index = int(other_lane['lane_index'])
+        self_index = int(self._get_lane()['lane_index'])
+        return self_index < other_index
+
+    def is_right_of(self, other: Lane) -> bool:
+        """Inherited from superclass."""
+        assert self.is_same_roadblock(other), 'Lanes must be in the same roadblock'
+        other_lane = get_row_with_value(self._lanes_df, 'fid', other.id)
+        other_index = int(other_lane['lane_index'])
+        self_index = int(self._get_lane()['lane_index'])
+        return self_index > other_index
+
+    @cached_property
+    def adjacent_edges(self) -> Tuple[Optional[LaneGraphEdgeMapObject], Optional[LaneGraphEdgeMapObject]]:
+        """Inherited from superclass."""
+        lane_group_fid = self._get_lane()['lane_group_fid']
+        all_lanes = get_all_rows_with_value(self._lanes_df, 'lane_group_fid', lane_group_fid)
+        lane_index = self._get_lane()['lane_index']
+        left_lane_id = all_lanes[all_lanes['lane_index'] == int(lane_index) - 1]['fid']
+        right_lane_id = all_lanes[all_lanes['lane_index'] == int(lane_index) + 1]['fid']
+        left_lane = NuPlanLane(left_lane_id.item(), self._lanes_df, self._lane_connectors_df, self._baseline_paths_df, self._boundaries_df, self._stop_lines_df, self._lane_connector_polygon_df, self._map_data) if not left_lane_id.empty else None
+        right_lane = NuPlanLane(right_lane_id.item(), self._lanes_df, self._lane_connectors_df, self._baseline_paths_df, self._boundaries_df, self._stop_lines_df, self._lane_connector_polygon_df, self._map_data) if not right_lane_id.empty else None
+        return (left_lane, right_lane)
+
+    def get_width_left_right(self, point: Point2D, include_outside: bool=False) -> Tuple[Optional[float], Optional[float]]:
+        """Inherited from superclass."""
+        raise NotImplementedError
+
+    def oriented_distance(self, point: Point2D) -> float:
+        """Inherited from superclass"""
+        raise NotImplementedError
+
+    def _get_lane(self) -> pd.Series:
+        """
+        Gets the series from the lane dataframe containing lane's id.
+        :return: the respective series from the lanes dataframe.
+        """
+        if self._lane is None:
+            self._lane = get_row_with_value(self._lanes_df, 'fid', self.id)
+        return self._lane
+
+    @cached_property
+    def index(self) -> int:
+        """Inherited from superclass"""
+        return int(self._get_lane()['lane_index'])
+
+class NuPlanIntersection(Intersection):
+    """
+    NuPlanMap implementation of Intersection.
+    """
+
+    def __init__(self, intersection_id: str, intersections_df: VectorLayer) -> None:
+        """
+        Constructor of NuPlanIntersection.
+        :param intersection_id: unique identifier of the intersection.
+        :param intersections_df: the geopandas GeoDataframe that contains all intersections in the map.
+        """
+        self._intersections_df = intersections_df
+        self._intersection = get_row_with_value(self._intersections_df, 'fid', intersection_id)
+        super().__init__(intersection_id, IntersectionType.DEFAULT)
+
+    @cached_property
+    def polygon(self) -> Polygon:
+        """Inherited from superclass."""
+        return self._intersection.geometry
+
+    @cached_property
+    def interior_edges(self) -> List[LaneGraphEdgeMapObject]:
+        """Inherited from superclass"""
+        raise NotImplementedError
+
+    @cached_property
+    def incoming_edges(self) -> List[Lane]:
+        """Inherited from superclass"""
+        raise NotImplementedError
+
+    @cached_property
+    def center(self) -> Tuple[float, float]:
+        """
+        Returns center of intersection
+        :return: Center of intersection
+        """
+        raise NotImplementedError
+
+    @cached_property
+    def is_signaled(self) -> bool:
+        """
+        Returns if intersection is signaled
+        :return: True if intersection is signaled else False
+        """
+        raise NotImplementedError
+
+class NuPlanMap(AbstractMap):
+    """
+    NuPlanMap implementation of Map API.
+    """
+
+    def __init__(self, maps_db: IMapsDB, map_name: str) -> None:
+        """
+        Initializes the map class.
+        :param maps_db: MapsDB instance.
+        :param map_name: Name of the map.
+        """
+        self._maps_db = maps_db
+        self._vector_map: Dict[str, VectorLayer] = defaultdict(VectorLayer)
+        self._raster_map: Dict[str, RasterLayer] = defaultdict(RasterLayer)
+        self._map_objects: Dict[SemanticMapLayer, Dict[str, MapObject]] = defaultdict(dict)
+        self._map_name = map_name
+        self._map_object_getter: Dict[SemanticMapLayer, Callable[[str], MapObject]] = {SemanticMapLayer.LANE: self._get_lane, SemanticMapLayer.LANE_CONNECTOR: self._get_lane_connector, SemanticMapLayer.ROADBLOCK: self._get_roadblock, SemanticMapLayer.ROADBLOCK_CONNECTOR: self._get_roadblock_connector, SemanticMapLayer.STOP_LINE: self._get_stop_line, SemanticMapLayer.CROSSWALK: self._get_crosswalk, SemanticMapLayer.INTERSECTION: self._get_intersection, SemanticMapLayer.WALKWAYS: self._get_walkway, SemanticMapLayer.CARPARK_AREA: self._get_carpark_area}
+        self._vector_layer_mapping = {SemanticMapLayer.LANE: 'lanes_polygons', SemanticMapLayer.ROADBLOCK: 'lane_groups_polygons', SemanticMapLayer.INTERSECTION: 'intersections', SemanticMapLayer.STOP_LINE: 'stop_polygons', SemanticMapLayer.CROSSWALK: 'crosswalks', SemanticMapLayer.DRIVABLE_AREA: 'drivable_area', SemanticMapLayer.LANE_CONNECTOR: 'lane_connectors', SemanticMapLayer.ROADBLOCK_CONNECTOR: 'lane_group_connectors', SemanticMapLayer.BASELINE_PATHS: 'baseline_paths', SemanticMapLayer.BOUNDARIES: 'boundaries', SemanticMapLayer.WALKWAYS: 'walkways', SemanticMapLayer.CARPARK_AREA: 'carpark_areas'}
+        self._raster_layer_mapping = {SemanticMapLayer.DRIVABLE_AREA: 'drivable_area'}
+        self._LANE_CONNECTOR_POLYGON_LAYER = 'gen_lane_connectors_scaled_width_polygons'
+
+    def __reduce__(self) -> Tuple[Type['NuPlanMap'], Tuple[Any, ...]]:
+        """
+        Hints on how to reconstruct the object when pickling.
+        This object is reconstructed by pickle to avoid serializing potentially large state/caches.
+        :return: Object type and constructor arguments to be used.
+        """
+        return (self.__class__, (self._maps_db, self._map_name))
+
+    @property
+    def map_name(self) -> str:
+        """Inherited, see superclass."""
+        return self._map_name
+
+    def get_available_map_objects(self) -> List[SemanticMapLayer]:
+        """Inherited, see superclass."""
+        return list(self._map_object_getter.keys())
+
+    def get_available_raster_layers(self) -> List[SemanticMapLayer]:
+        """Inherited, see superclass."""
+        return list(self._raster_layer_mapping.keys())
+
+    def get_raster_map_layer(self, layer: SemanticMapLayer) -> RasterLayer:
+        """Inherited, see superclass."""
+        layer_id = self._semantic_raster_layer_map(layer)
+        return self._load_raster_layer(layer_id)
+
+    def get_raster_map(self, layers: List[SemanticMapLayer]) -> RasterMap:
+        """Inherited, see superclass."""
+        raster_map = RasterMap(layers=defaultdict(RasterLayer))
+        for layer in layers:
+            raster_map.layers[layer] = self.get_raster_map_layer(layer)
+        return raster_map
+
+    def is_in_layer(self, point: Point2D, layer: SemanticMapLayer) -> bool:
+        """Inherited, see superclass."""
+        if layer == SemanticMapLayer.TURN_STOP:
+            stop_lines = self._get_vector_map_layer(SemanticMapLayer.STOP_LINE)
+            in_stop_line = stop_lines.loc[stop_lines.contains(geom.Point(point.x, point.y))]
+            return any(in_stop_line.loc[in_stop_line['stop_polygon_type_fid'] == StopLineType.TURN_STOP.value].values)
+        return bool(is_in_type(point.x, point.y, self._get_vector_map_layer(layer)))
+
+    def get_all_map_objects(self, point: Point2D, layer: SemanticMapLayer) -> List[MapObject]:
+        """Inherited, see superclass."""
+        try:
+            return self._get_all_map_objects(point, layer)
+        except KeyError:
+            raise ValueError(f'Object representation for layer: {layer.name} is unavailable')
+
+    def get_one_map_object(self, point: Point2D, layer: SemanticMapLayer) -> Optional[MapObject]:
+        """Inherited, see superclass."""
+        map_objects = self.get_all_map_objects(point, layer)
+        if len(map_objects) > 1:
+            raise AssertionError(f'{len(map_objects)} map objects found. Expected only one. Try using get_all_map_objects()')
+        if len(map_objects) == 0:
+            return None
+        return map_objects[0]
+
+    def get_proximal_map_objects(self, point: Point2D, radius: float, layers: List[SemanticMapLayer]) -> Dict[SemanticMapLayer, List[MapObject]]:
+        """Inherited, see superclass."""
+        x_min, x_max = (point.x - radius, point.x + radius)
+        y_min, y_max = (point.y - radius, point.y + radius)
+        patch = geom.box(x_min, y_min, x_max, y_max)
+        supported_layers = self.get_available_map_objects()
+        unsupported_layers = [layer for layer in layers if layer not in supported_layers]
+        assert len(unsupported_layers) == 0, f'Object representation for layer(s): {unsupported_layers} is unavailable'
+        object_map: Dict[SemanticMapLayer, List[MapObject]] = defaultdict(list)
+        for layer in layers:
+            object_map[layer] = self._get_proximity_map_object(patch, layer)
+        return object_map
+
+    def get_map_object(self, object_id: str, layer: SemanticMapLayer) -> Optional[MapObject]:
+        """Inherited, see superclass."""
+        try:
+            if object_id not in self._map_objects[layer]:
+                map_object: MapObject = self._map_object_getter[layer](object_id)
+                self._map_objects[layer][object_id] = map_object
+            return self._map_objects[layer][object_id]
+        except KeyError:
+            raise ValueError(f'Object representation for layer: {layer.name} object: {object_id} is unavailable')
+
+    def get_distance_to_nearest_map_object(self, point: Point2D, layer: SemanticMapLayer) -> Tuple[Optional[str], Optional[float]]:
+        """Inherited from superclass."""
+        surfaces = self._get_vector_map_layer(layer)
+        if surfaces is not None:
+            surfaces['distance_to_point'] = surfaces.apply(lambda row: geom.Point(point.x, point.y).distance(row.geometry), axis=1)
+            surfaces = surfaces.sort_values(by='distance_to_point')
+            nearest_surface = surfaces.iloc[0]
+            nearest_surface_id = nearest_surface.fid
+            nearest_surface_distance = nearest_surface.distance_to_point
+        else:
+            nearest_surface_id = None
+            nearest_surface_distance = None
+        return (nearest_surface_id, nearest_surface_distance)
+
+    def get_distance_to_nearest_raster_layer(self, point: Point2D, layer: SemanticMapLayer) -> float:
+        """Inherited from superclass"""
+        raise NotImplementedError
+
+    def get_distances_matrix_to_nearest_map_object(self, points: List[Point2D], layer: SemanticMapLayer) -> Optional[npt.NDArray[np.float64]]:
+        """
+        Returns the distance matrix (in meters) between a list of points and their nearest desired surface.
+            That distance is the L1 norm from the point to the closest location on the surface.
+        :param points: [m] A list of x, y coordinates in global frame.
+        :param layer: A semantic layer to query.
+        :return: An array of shortest distance from each point to the nearest desired surface.
+        """
+        surfaces = self._get_vector_map_layer(layer)
+        if surfaces is not None:
+            corner_points = geopandas.GeoSeries([geom.Point(point.x, point.y) for point in points])
+            distances = surfaces.geometry.apply(lambda g: corner_points.distance(g))
+            distances = np.asarray(distances.min())
+            return cast(npt.NDArray[np.float64], distances)
+        else:
+            return None
+
+    def initialize_all_layers(self) -> None:
+        """
+        Load all layers to vector map
+        :param: None
+        :return: None
+        """
+        for layer_name in self._vector_layer_mapping.values():
+            self._load_vector_map_layer(layer_name)
+        for layer_name in self._raster_layer_mapping.values():
+            self._load_vector_map_layer(layer_name)
+        self._load_vector_map_layer(self._LANE_CONNECTOR_POLYGON_LAYER)
+
+    def _semantic_vector_layer_map(self, layer: SemanticMapLayer) -> str:
+        """
+        Mapping from SemanticMapLayer int to MapsDB internal representation of vector layers.
+        :param layer: The querired semantic map layer.
+        :return: A internal layer name as a string.
+        @raise ValueError if the requested layer does not exist for MapsDBMap
+        """
+        try:
+            return self._vector_layer_mapping[layer]
+        except KeyError:
+            raise ValueError('Unknown layer: {}'.format(layer.name))
+
+    def _semantic_raster_layer_map(self, layer: SemanticMapLayer) -> str:
+        """
+        Mapping from SemanticMapLayer int to MapsDB internal representation of raster layers.
+        :param layer: The queried semantic map layer.
+        :return: A internal layer name as a string.
+        @raise ValueError if the requested layer does not exist for MapsDBMap
+        """
+        try:
+            return self._raster_layer_mapping[layer]
+        except KeyError:
+            raise ValueError('Unknown layer: {}'.format(layer.name))
+
+    def _get_vector_map_layer(self, layer: SemanticMapLayer) -> VectorLayer:
+        """Inherited, see superclass."""
+        layer_id = self._semantic_vector_layer_map(layer)
+        return self._load_vector_map_layer(layer_id)
+
+    def _load_raster_layer(self, layer_name: str) -> RasterLayer:
+        """
+        Load and cache raster layers.
+        :layer_name: the name of the vector layer to be loaded.
+        :return: the loaded RasterLayer.
+        """
+        if layer_name not in self._raster_map:
+            map_layer: MapLayer = self._maps_db.load_layer(self._map_name, layer_name)
+            self._raster_map[layer_name] = raster_layer_from_map_layer(map_layer)
+        return self._raster_map[layer_name]
+
+    def _load_vector_map_layer(self, layer_name: str) -> VectorLayer:
+        """
+        Load and cache vector layers.
+        :layer_name: the name of the vector layer to be loaded.
+        :return: the loaded VectorLayer.
+        """
+        if layer_name not in self._vector_map:
+            if layer_name == 'drivable_area':
+                self._initialize_drivable_area()
+            else:
+                self._vector_map[layer_name] = self._maps_db.load_vector_layer(self._map_name, layer_name)
+        return self._vector_map[layer_name]
+
+    def _get_all_map_objects(self, point: Point2D, layer: SemanticMapLayer) -> List[MapObject]:
+        """
+        Gets a list of lanes where its polygon overlaps the queried point.
+        :param point: [m] x, y coordinates in global frame.
+        :return: a list of lanes. An empty list if no lanes were found.
+        """
+        if layer == SemanticMapLayer.LANE_CONNECTOR:
+            return self._get_all_lane_connectors(point)
+        else:
+            layer_df = self._get_vector_map_layer(layer)
+            ids = layer_df.loc[layer_df.contains(geom.Point(point.x, point.y))]['fid'].tolist()
+            return [self.get_map_object(map_object_id, layer) for map_object_id in ids]
+
+    def _get_all_lane_connectors(self, point: Point2D) -> List[LaneConnector]:
+        """
+        Gets a list of lane connectors where its polygon overlaps the queried point.
+        :param point: [m] x, y coordinates in global frame.
+        :return: a list of lane connectors. An empty list if no lane connectors were found.
+        """
+        lane_connectors_df = self._load_vector_map_layer(self._LANE_CONNECTOR_POLYGON_LAYER)
+        ids = lane_connectors_df.loc[lane_connectors_df.contains(geom.Point(point.x, point.y))]['lane_connector_fid'].tolist()
+        lane_connector_ids = list(map(str, ids))
+        return [self._get_lane_connector(lane_connector_id) for lane_connector_id in lane_connector_ids]
+
+    def _get_proximity_map_object(self, patch: geom.Polygon, layer: SemanticMapLayer) -> List[MapObject]:
+        """
+        Gets nearby lanes within the given patch.
+        :param patch: The area to be checked.
+        :param layer: desired layer to check.
+        :return: A list of map objects.
+        """
+        layer_df = self._get_vector_map_layer(layer)
+        map_object_ids = layer_df[layer_df['geometry'].intersects(patch)]['fid']
+        return [self.get_map_object(map_object_id, layer) for map_object_id in map_object_ids]
+
+    def _get_lane(self, lane_id: str) -> Lane:
+        """
+        Gets the lane with the given lane id.
+        :param lane_id: Desired unique id of a lane that should be extracted.
+        :return: Lane object.
+        """
+        return NuPlanLane(lane_id, self._get_vector_map_layer(SemanticMapLayer.LANE), self._get_vector_map_layer(SemanticMapLayer.LANE_CONNECTOR), self._get_vector_map_layer(SemanticMapLayer.BASELINE_PATHS), self._get_vector_map_layer(SemanticMapLayer.BOUNDARIES), self._get_vector_map_layer(SemanticMapLayer.STOP_LINE), self._load_vector_map_layer(self._LANE_CONNECTOR_POLYGON_LAYER), self) if int(lane_id) in self._get_vector_map_layer(SemanticMapLayer.LANE)['lane_fid'].tolist() else None
+
+    def _get_lane_connector(self, lane_connector_id: str) -> LaneConnector:
+        """
+        Gets the lane connector with the given lane_connector_id.
+        :param lane_connector_id: Desired unique id of a lane connector that should be extracted.
+        :return: LaneConnector object.
+        """
+        return NuPlanLaneConnector(lane_connector_id, self._get_vector_map_layer(SemanticMapLayer.LANE), self._get_vector_map_layer(SemanticMapLayer.LANE_CONNECTOR), self._get_vector_map_layer(SemanticMapLayer.BASELINE_PATHS), self._get_vector_map_layer(SemanticMapLayer.BOUNDARIES), self._get_vector_map_layer(SemanticMapLayer.STOP_LINE), self._load_vector_map_layer(self._LANE_CONNECTOR_POLYGON_LAYER), self) if lane_connector_id in self._get_vector_map_layer(SemanticMapLayer.LANE_CONNECTOR)['fid'].tolist() else None
+
+    def _get_roadblock(self, roadblock_id: str) -> RoadBlockGraphEdgeMapObject:
+        """
+        Gets the roadblock with the given roadblock_id.
+        :param roadblock_id: Desired unique id of a roadblock that should be extracted.
+        :return: RoadBlock object.
+        """
+        return NuPlanRoadBlock(roadblock_id, self._get_vector_map_layer(SemanticMapLayer.LANE), self._get_vector_map_layer(SemanticMapLayer.LANE_CONNECTOR), self._get_vector_map_layer(SemanticMapLayer.BASELINE_PATHS), self._get_vector_map_layer(SemanticMapLayer.BOUNDARIES), self._get_vector_map_layer(SemanticMapLayer.ROADBLOCK), self._get_vector_map_layer(SemanticMapLayer.ROADBLOCK_CONNECTOR), self._get_vector_map_layer(SemanticMapLayer.STOP_LINE), self._get_vector_map_layer(SemanticMapLayer.INTERSECTION), self._load_vector_map_layer(self._LANE_CONNECTOR_POLYGON_LAYER), self) if roadblock_id in self._get_vector_map_layer(SemanticMapLayer.ROADBLOCK)['fid'].tolist() else None
+
+    def _get_roadblock_connector(self, roadblock_connector_id: str) -> RoadBlockGraphEdgeMapObject:
+        """
+        Gets the roadblock connector with the given roadblock_connector_id.
+        :param roadblock_connector_id: Desired unique id of a roadblock connector that should be extracted.
+        :return: RoadBlockConnector object.
+        """
+        return NuPlanRoadBlockConnector(roadblock_connector_id, self._get_vector_map_layer(SemanticMapLayer.LANE), self._get_vector_map_layer(SemanticMapLayer.LANE_CONNECTOR), self._get_vector_map_layer(SemanticMapLayer.BASELINE_PATHS), self._get_vector_map_layer(SemanticMapLayer.BOUNDARIES), self._get_vector_map_layer(SemanticMapLayer.ROADBLOCK), self._get_vector_map_layer(SemanticMapLayer.ROADBLOCK_CONNECTOR), self._get_vector_map_layer(SemanticMapLayer.STOP_LINE), self._get_vector_map_layer(SemanticMapLayer.INTERSECTION), self._load_vector_map_layer(self._LANE_CONNECTOR_POLYGON_LAYER), self) if roadblock_connector_id in self._get_vector_map_layer(SemanticMapLayer.ROADBLOCK_CONNECTOR)['fid'].tolist() else None
+
+    def _initialize_drivable_area(self) -> None:
+        """
+        Drivable area is considered as the union of road_segments, intersections and generic_drivable_areas.
+        Hence, the three layers has to be joined to cover all drivable areas.
+        """
+        road_segments = self._load_vector_map_layer('road_segments')
+        intersections = self._load_vector_map_layer('intersections')
+        generic_drivable_areas = self._load_vector_map_layer('generic_drivable_areas')
+        car_parks = self._load_vector_map_layer('carpark_areas')
+        self._vector_map['drivable_area'] = pd.concat([road_segments, intersections, generic_drivable_areas, car_parks]).dropna(axis=1, how='any')
+
+    def _get_stop_line(self, stop_line_id: str) -> StopLine:
+        """
+        Gets the stop line with the given stop_line_id.
+        :param stop_line_id: desired unique id of a stop line that should be extracted.
+        :return: NuPlanStopLine object.
+        """
+        return NuPlanStopLine(stop_line_id, self._get_vector_map_layer(SemanticMapLayer.STOP_LINE)) if stop_line_id in self._get_vector_map_layer(SemanticMapLayer.STOP_LINE)['fid'].tolist() else None
+
+    def _get_crosswalk(self, crosswalk_id: str) -> NuPlanPolygonMapObject:
+        """
+        Gets the stop line with the given crosswalk_id.
+        :param crosswalk_id: desired unique id of a stop line that should be extracted.
+        :return: NuPlanStopLine object.
+        """
+        return NuPlanPolygonMapObject(crosswalk_id, self._get_vector_map_layer(SemanticMapLayer.CROSSWALK)) if crosswalk_id in self._get_vector_map_layer(SemanticMapLayer.CROSSWALK)['fid'].tolist() else None
+
+    def _get_intersection(self, intersection_id: str) -> Intersection:
+        """
+        Gets the stop line with the given stop_line_id.
+        :param intersection_id: desired unique id of a stop line that should be extracted.
+        :return: NuPlanStopLine object.
+        """
+        return NuPlanIntersection(intersection_id, self._get_vector_map_layer(SemanticMapLayer.INTERSECTION)) if intersection_id in self._get_vector_map_layer(SemanticMapLayer.INTERSECTION)['fid'].tolist() else None
+
+    def _get_walkway(self, walkway_id: str) -> NuPlanPolygonMapObject:
+        """
+        Gets the walkway with the given walkway_id.
+        :param walkway_id: desired unique id of a walkway that should be extracted.
+        :return: NuPlanPolygonMapObject object.
+        """
+        return NuPlanPolygonMapObject(walkway_id, self._get_vector_map_layer(SemanticMapLayer.WALKWAYS)) if walkway_id in self._get_vector_map_layer(SemanticMapLayer.WALKWAYS)['fid'].tolist() else None
+
+    def _get_carpark_area(self, carpark_area_id: str) -> NuPlanPolygonMapObject:
+        """
+        Gets the car park area with the given car_park_area_id.
+        :param carpark_area_id: desired unique id of a car park that should be extracted.
+        :return: NuPlanPolygonMapObject object.
+        """
+        return NuPlanPolygonMapObject(carpark_area_id, self._get_vector_map_layer(SemanticMapLayer.CARPARK_AREA)) if carpark_area_id in self._get_vector_map_layer(SemanticMapLayer.CARPARK_AREA)['fid'].tolist() else None
+
+class NuPlanPolygonMapObject(PolygonMapObject):
+    """
+    NuPlanMap implementation of Polygon Map Object.
+    """
+
+    def __init__(self, generic_polygon_area_id: str, generic_polygon_area: VectorLayer):
+        """
+        Constructor of generic polygon map layer.
+        This includes:
+            - CROSSWALK
+            - WALKWAYS
+            - CARPARK_AREA
+            - PUDO
+        :param generic_polygon_area_id: Generic polygon area id.
+        :param generic_polygon_area: Generic polygon area.
+        """
+        super().__init__(generic_polygon_area_id)
+        self._generic_polygon_area = generic_polygon_area
+        self._area = None
+
+    @cached_property
+    def polygon(self) -> Polygon:
+        """Inherited from superclass."""
+        return self._get_area().geometry
+
+    def _get_area(self) -> pd.Series:
+        """
+        Gets the series from the polygon dataframe containing polygon's id.
+        :return: The respective series from the polygon dataframe.
+        """
+        if self._area is None:
+            self._area = get_row_with_value(self._generic_polygon_area, 'fid', self.id)
+        return self._area
+
+class NuPlanLaneConnector(LaneConnector):
+    """
+    NuPlanMap implementation of LaneConnector.
+    """
+
+    def __init__(self, lane_connector_id: str, lanes_df: VectorLayer, lane_connectors_df: VectorLayer, baseline_paths_df: VectorLayer, boundaries_df: VectorLayer, stop_lines_df: VectorLayer, lane_connector_polygon_df: VectorLayer, map_data: AbstractMap):
+        """
+        Constructor of NuPlanLaneConnector.
+        :param lane_connector_id: unique identifier of the lane connector.
+        :param lanes_df: the geopandas GeoDataframe that contains all lanes in the map.
+        :param lane_connectors_df: the geopandas GeoDataframe that contains all lane connectors in the map.
+        :param baseline_paths_df: the geopandas GeoDataframe that contains all baselines in the map.
+        :param boundaries_df: the geopandas GeoDataframe that contains all boundaries in the map.
+        :param stop_lines_df: the geopandas GeoDataframe that contains all stop lines in the map.
+        :param lane_connector_polygon_df: the geopandas GeoDataframe that contains polygons for lane connectors.
+        """
+        super().__init__(lane_connector_id)
+        self._lanes_df = lanes_df
+        self._lane_connectors_df = lane_connectors_df
+        self._baseline_paths_df = baseline_paths_df
+        self._boundaries_df = boundaries_df
+        self._stop_lines_df = stop_lines_df
+        self._lane_connector_polygon_df = lane_connector_polygon_df
+        self._lane_connector = None
+        self._map_data = map_data
+
+    @cached_property
+    def incoming_edges(self) -> List[LaneGraphEdgeMapObject]:
+        """Inherited from superclass."""
+        incoming_lane_id = self._get_lane_connector()['exit_lane_fid']
+        return [lane.NuPlanLane(str(incoming_lane_id), self._lanes_df, self._lane_connectors_df, self._baseline_paths_df, self._boundaries_df, self._stop_lines_df, self._lane_connector_polygon_df, self._map_data)]
+
+    @cached_property
+    def outgoing_edges(self) -> List[LaneGraphEdgeMapObject]:
+        """Inherited from superclass."""
+        outgoing_lane_id = self._get_lane_connector()['entry_lane_fid']
+        return [lane.NuPlanLane(str(outgoing_lane_id), self._lanes_df, self._lane_connectors_df, self._baseline_paths_df, self._boundaries_df, self._stop_lines_df, self._lane_connector_polygon_df, self._map_data)]
+
+    @cached_property
+    def parallel_edges(self) -> List[LaneGraphEdgeMapObject]:
+        """Inherited from superclass"""
+        raise NotImplementedError
+
+    @cached_property
+    def baseline_path(self) -> PolylineMapObject:
+        """Inherited from superclass."""
+        return NuPlanPolylineMapObject(get_row_with_value(self._baseline_paths_df, 'lane_connector_fid', self.id))
+
+    @cached_property
+    def left_boundary(self) -> PolylineMapObject:
+        """Inherited from superclass."""
+        boundary_fid = get_row_with_value(self._lane_connector_polygon_df, 'lane_connector_fid', self.id)['left_boundary_fid']
+        return NuPlanPolylineMapObject(get_row_with_value(self._boundaries_df, 'fid', str(boundary_fid)))
+
+    @cached_property
+    def right_boundary(self) -> PolylineMapObject:
+        """Inherited from superclass."""
+        boundary_fid = get_row_with_value(self._lane_connector_polygon_df, 'lane_connector_fid', self.id)['right_boundary_fid']
+        return NuPlanPolylineMapObject(get_row_with_value(self._boundaries_df, 'fid', str(boundary_fid)))
+
+    @cached_property
+    def speed_limit_mps(self) -> Optional[float]:
+        """Inherited from superclass."""
+        speed_limit = self._get_lane_connector()['speed_limit_mps']
+        is_valid = speed_limit == speed_limit and speed_limit is not None
+        return float(speed_limit) if is_valid else None
+
+    @cached_property
+    def polygon(self) -> Polygon:
+        """Inherited from superclass. Note, the polygon is inferred from the baseline."""
+        lane_connector_polygon_row = get_row_with_value(self._lane_connector_polygon_df, 'lane_connector_fid', self.id)
+        return lane_connector_polygon_row.geometry
+
+    def is_left_of(self, other: LaneConnector) -> bool:
+        """Inherited from superclass."""
+        return False
+
+    def is_right_of(self, other: LaneConnector) -> bool:
+        """Inherited from superclass."""
+        return False
+
+    def get_roadblock_id(self) -> str:
+        """Inherited from superclass."""
+        return str(self._get_lane_connector()['lane_group_connector_fid'])
+
+    @cached_property
+    def parent(self) -> RoadBlockGraphEdgeMapObject:
+        """Inherited from superclass"""
+        return self._map_data.get_map_object(self.get_roadblock_id(), SemanticMapLayer.ROADBLOCK_CONNECTOR)
+
+    def has_traffic_lights(self) -> bool:
+        """Inherited from superclass."""
+        return bool(self._get_lane_connector()['traffic_light_stop_line_fids'])
+
+    @cached_property
+    def stop_lines(self) -> List[StopLine]:
+        """Inherited from superclass."""
+        stop_line_ids = self._get_lane_connector()['traffic_light_stop_line_fids']
+        stop_line_ids = cast(List[str], stop_line_ids.replace(' ', '').split(','))
+        candidate_stop_lines = [NuPlanStopLine(id_, self._stop_lines_df) for id_ in stop_line_ids if id_]
+        if not candidate_stop_lines:
+            return []
+        stop_lines = [stop_line for stop_line in candidate_stop_lines if stop_line.polygon.intersects(self.baseline_path.linestring)]
+        if stop_lines:
+            return stop_lines
+
+        def distance_to_stop_line(stop_line: StopLine) -> float:
+            """
+            Calculates the distance between the first point of the lane connector's baseline path
+            :param stop_line: The stop line to calculate the distance to.
+            :return: [m] The distance between first point points of the lane connector to the stop_line polygon.
+            """
+            start = Point(self.baseline_path.linestring.coords[0])
+            return float(start.distance(stop_line.polygon))
+        distances = [distance_to_stop_line(stop_line) for stop_line in candidate_stop_lines]
+        return [candidate_stop_lines[np.argmin(distances)]]
+
+    def turn_type(self) -> LaneConnectorType:
+        """Inherited from superclass"""
+        raise NotImplementedError
+
+    def get_width_left_right(self, point: Point2D, include_outside: bool=False) -> Tuple[Optional[float], Optional[float]]:
+        """Inherited from superclass."""
+        raise NotImplementedError
+
+    def oriented_distance(self, point: Point2D) -> float:
+        """Inherited from superclass"""
+        raise NotImplementedError
+
+    def _get_lane_connector(self) -> pd.Series:
+        """
+        Gets the series from the lane dataframe containing lane's id.
+        :return: the respective series from the lanes dataframe.
+        """
+        if self._lane_connector is None:
+            self._lane_connector = get_row_with_value(self._lane_connectors_df, 'fid', self.id)
+        return self._lane_connector
+
+class NuPlanRoadBlockConnector(RoadBlockGraphEdgeMapObject):
+    """
+    NuPlanMap implmentation of Roadblock Connector.
+    """
+
+    def __init__(self, roadblock_connector_id: str, lanes_df: VectorLayer, lane_connectors_df: VectorLayer, baseline_paths_df: VectorLayer, boundaries_df: VectorLayer, roadblocks_df: VectorLayer, roadblock_connectors_df: VectorLayer, stop_lines_df: VectorLayer, intersections_df: VectorLayer, lane_connector_polygon_df: VectorLayer, map_data: AbstractMap):
+        """
+        Constructor of NuPlanLaneConnector.
+        :param roadblock_connector_id: unique identifier of the roadblock connector.
+        :param lanes_df: the geopandas GeoDataframe that contains all lanes in the map.
+        :param lane_connectors_df: the geopandas GeoDataframe that contains all lane connectors in the map.
+        :param baseline_paths_df: the geopandas GeoDataframe that contains all baselines in the map.
+        :param boundaries_df: the geopandas GeoDataframe that contains all boundaries in the map.
+        :param roadblocks_df: the geopandas GeoDataframe that contains all roadblocks (lane groups) in the map.
+        :param roadblock_connectors_df: the geopandas GeoDataframe that contains all roadblock connectors (lane group
+            connectors) in the map.
+        :param stop_lines_df: the geopandas GeoDataframe that contains all stop lines in the map.
+        :param lane_connector_polygon_df: the geopandas GeoDataframe that contains polygons for lane connectors.
+        """
+        super().__init__(roadblock_connector_id)
+        self._lanes_df = lanes_df
+        self._lane_connectors_df = lane_connectors_df
+        self._baseline_paths_df = baseline_paths_df
+        self._boundaries_df = boundaries_df
+        self._roadblocks_df = roadblocks_df
+        self._roadblock_connectors_df = roadblock_connectors_df
+        self._stop_lines_df = stop_lines_df
+        self._lane_connector_polygon_df = lane_connector_polygon_df
+        self._intersections_df = intersections_df
+        self._map_data = map_data
+
+    @cached_property
+    def incoming_edges(self) -> List[RoadBlockGraphEdgeMapObject]:
+        """Inherited from superclass."""
+        incoming_roadblock_id = self._roadblock_connector['from_lane_group_fid']
+        return [roadblock.NuPlanRoadBlock(str(incoming_roadblock_id), self._lanes_df, self._lane_connectors_df, self._baseline_paths_df, self._boundaries_df, self._roadblocks_df, self._roadblock_connectors_df, self._stop_lines_df, self._intersections_df, self._lane_connector_polygon_df, self._map_data)]
+
+    @cached_property
+    def outgoing_edges(self) -> List[RoadBlockGraphEdgeMapObject]:
+        """Inherited from superclass."""
+        outgoing_roadblock_id = self._roadblock_connector['to_lane_group_fid']
+        return [roadblock.NuPlanRoadBlock(str(outgoing_roadblock_id), self._lanes_df, self._lane_connectors_df, self._baseline_paths_df, self._boundaries_df, self._roadblocks_df, self._roadblock_connectors_df, self._stop_lines_df, self._intersections_df, self._lane_connector_polygon_df, self._map_data)]
+
+    @cached_property
+    def interior_edges(self) -> List[LaneGraphEdgeMapObject]:
+        """Inherited from superclass."""
+        lane_connector_ids = get_all_rows_with_value(self._lane_connectors_df, 'lane_group_connector_fid', self.id)['fid']
+        return [NuPlanLaneConnector(str(lane_connector_id), self._lanes_df, self._lane_connectors_df, self._baseline_paths_df, self._boundaries_df, self._stop_lines_df, self._lane_connector_polygon_df, self._map_data) for lane_connector_id in lane_connector_ids.to_list()]
+
+    @cached_property
+    def polygon(self) -> Polygon:
+        """Inherited from superclass."""
+        return self._roadblock_connector.geometry
+
+    @cached_property
+    def children_stop_lines(self) -> List[StopLine]:
+        """Inherited from superclass."""
+        raise NotImplementedError
+
+    @cached_property
+    def parallel_edges(self) -> List[RoadBlockGraphEdgeMapObject]:
+        """Inherited from superclass."""
+        raise NotImplementedError
+
+    @cached_property
+    def _roadblock_connector(self) -> pd.Series:
+        """
+        Gets the series from the roadblock connector dataframe containing roadblock connector's id.
+        :return: the respective series from the roadblock connectors dataframe.
+        """
+        return get_row_with_value(self._roadblock_connectors_df, 'fid', self.id)
+
+    @property
+    def intersection(self) -> Optional[Intersection]:
+        """Inherited from superclass."""
+        intersection_id = str(self._roadblock_connector['intersection_fid'])
+        return intersection.NuPlanIntersection(intersection_id, self._intersections_df)
+
+class NuPlanStopLine(StopLine):
+    """
+    NuPlanMap implementation of StopLine.
+    """
+
+    def __init__(self, stop_line_id: str, stop_lines_df: VectorLayer) -> None:
+        """
+        Constructor of NuPlanStopLine.
+        :param stop_line_id: unique identifier of the stop line.
+        :param stop_lines_df: the geopandas GeoDataframe that contains all stop lines in the map.
+        """
+        self._stop_lines_df = stop_lines_df
+        self._stop_line = get_row_with_value(self._stop_lines_df, 'fid', stop_line_id)
+        super().__init__(stop_line_id, self._stop_line['stop_polygon_type_fid'])
+
+    @cached_property
+    def polygon(self) -> Polygon:
+        """Inherited from superclass."""
+        return self._stop_line.geometry
+
+    @cached_property
+    def intersection_from(self) -> Intersection:
+        """Inherited from superclass"""
+        raise NotImplementedError
+
+    @cached_property
+    def layer_type(self) -> StopLineType:
+        """Inherited from superclass"""
+        raise NotImplementedError
+
+    @cached_property
+    def parent(self) -> RoadBlockGraphEdgeMapObject:
+        """Inherited from superclass"""
+        raise NotImplementedError
+

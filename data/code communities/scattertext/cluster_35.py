@@ -1,0 +1,180 @@
+# Cluster 35
+
+def produce_scattertext_pyplot(scatterplot_structure, figsize=(15, 7), textsize=7, distance_margin_fraction=0.009, scatter_size=5, cmap='RdYlBu', sample=0, xlabel=None, ylabel=None, dpi=300, draw_lines=False, linecolor='k', draw_all=False, nbr_candidates=0):
+    """
+    Parameters
+    ----------
+    scatterplot_structure : ScatterplotStructure
+    figsize : Tuple[int,int]
+        Size of ouput pyplot figure
+    textsize : int
+        Size of text terms in plot
+    distance_margin_fraction : float
+        Fraction of the 2d space to use as margins for text bboxes
+    scatter_size : int
+        Size of scatter disks
+    cmap : str
+        Matplotlib compatible colormap
+    sample : int
+        if >0 samples a subset from the scatterplot_structure, used for testing
+    xlabel : str
+        Overrides label from scatterplot_structure
+    ylabel : str
+        Overrides label from scatterplot_structure
+    dpi : int
+        Pyplot figure resolution
+
+    Returns
+    -------
+    matplotlib.figure.Figure
+    matplotlib figure that can be used with plt.show() or plt.savefig()
+
+    """
+    return pyplot_from_scattertext_structure(scatterplot_structure, figsize=figsize, textsize=textsize, distance_margin_fraction=distance_margin_fraction, scatter_size=scatter_size, cmap=cmap, sample=sample, xlabel=xlabel, ylabel=ylabel, dpi=dpi, draw_lines=draw_lines, linecolor=linecolor, draw_all=draw_all, nbr_candidates=nbr_candidates)
+
+def pyplot_from_scattertext_structure(scatterplot_structure, figsize, textsize, distance_margin_fraction, scatter_size, cmap, sample, xlabel, ylabel, dpi, draw_lines, linecolor, draw_all, nbr_candidates, num_top_terms: int=10):
+    """
+    Parameters
+    ----------
+    scatterplot_structure : ScatterplotStructure
+    figsize : Tuple[int,int]
+        Size of ouput pyplot figure
+    textsize : int
+        Size of text terms in plot
+    distance_margin_fraction : float
+        Fraction of the 2d space to use as margins for text bboxes
+    scatter_size : int
+        Size of scatter disks
+    cmap : str
+        Matplotlib compatible colormap string
+    sample : int
+        if >0 samples a subset from the scatterplot_structure, used for testing
+    xlabel : str
+        Overrides label from scatterplot_structure
+    ylabel : str
+        Overrides label from scatterplot_structure
+    dpi : int
+        Pyplot figure resolution
+    num_top_terms : int
+        Overrides scatterplot_structure.top_terms_length, default is 10
+
+    Returns
+    -------
+    matplotlib.figure.Figure
+    matplotlib figure that can be used with plt.show() or plt.savefig()
+
+    """
+    try:
+        import matplotlib.pyplot as plt
+        import textalloc as ta
+    except:
+        raise Exception('Ensure that the packages textalloc==0.0.3 and matplotlib>=3.6.0 have been installed.')
+    if scatterplot_structure._top_terms_length != 14:
+        print('Warning: set the number of top terms to using the `num_top_terms` parameter to this function. ' + 'The number of characteristic terms will be scaled accordingly.')
+    scatterplot_structure.top_terms_length = num_top_terms
+    if sample > 0:
+        subset = random.sample(scatterplot_structure._visualization_data.word_dict['data'], sample)
+    else:
+        subset = scatterplot_structure._visualization_data.word_dict['data']
+    df = pd.DataFrame(subset)
+    if 'etc' in scatterplot_structure._visualization_data.word_dict['data'][0] and 'ColorScore' in scatterplot_structure._visualization_data.word_dict['data'][0]['etc']:
+        df['s'] = [d['etc']['ColorScore'] for d in subset]
+    info = scatterplot_structure._visualization_data.word_dict['info']
+    n_docs = len(scatterplot_structure._visualization_data.word_dict['docs']['texts'])
+    n_words = df.shape[0]
+    if df.s.isna().sum() > 0:
+        colors = 'k'
+    else:
+        colors = df.s
+    ax_plot = None
+    if scatterplot_structure._ignore_categories:
+        if scatterplot_structure._show_characteristic:
+            fig, axs = plt.subplots(1, 2, figsize=figsize, width_ratios=[5, 1], dpi=dpi)
+            ax_char = axs[1]
+        else:
+            fig, ax_plot = plt.subplots(1, 1, figsize=figsize, dpi=dpi)
+    elif scatterplot_structure._show_characteristic:
+        fig, axs = plt.subplots(1, 3, figsize=figsize, width_ratios=[6, 1, 1], dpi=dpi)
+        ax_cat = axs[1]
+        ax_char = axs[2]
+    else:
+        fig, axs = plt.subplots(1, 2, figsize=figsize, width_ratios=[5, 1], dpi=dpi)
+        ax_cat = axs[1]
+    plt.tight_layout()
+    if ax_plot is None:
+        ax_plot = axs[0]
+    ax_plot.scatter(df.x, df.y, c=colors, s=scatter_size, cmap=cmap)
+    xlims = ax_plot.get_xlim()
+    ylims = ax_plot.get_ylim()
+    ta.allocate_text(fig, ax_plot, df.x, df.y, df.term, xlims, ylims, x_scatter=df.x, y_scatter=df.y, textsize=textsize, distance_margin_fraction=distance_margin_fraction, draw_lines=draw_lines, linecolor=linecolor, draw_all=draw_all, nbr_candidates=nbr_candidates)
+    ax_plot.spines.right.set_visible(False)
+    ax_plot.spines.top.set_visible(False)
+    if xlabel is not None:
+        ax_plot.set_xlabel(xlabel)
+    elif scatterplot_structure._x_label is not None:
+        ax_plot.set_xlabel(scatterplot_structure._x_label)
+    elif not scatterplot_structure._ignore_categories:
+        ax_plot.set_xlabel(info['not_category_name'])
+    else:
+        pass
+    if ylabel is not None:
+        ax_plot.set_ylabel(ylabel)
+    elif scatterplot_structure._y_label is not None:
+        ax_plot.set_ylabel(scatterplot_structure._y_label)
+    elif not scatterplot_structure._ignore_categories:
+        ax_plot.set_ylabel(info['category_name'])
+    else:
+        pass
+    try:
+        if scatterplot_structure._x_axis_labels is not None:
+            ax_plot.locator_params(axis='x', nbins=len(scatterplot_structure._x_axis_labels))
+            ax_plot.set_xticks(ax_plot.get_xticks()[1:-1], scatterplot_structure._x_axis_labels, size=7)
+        else:
+            ax_plot.locator_params(axis='x', nbins=3)
+            ax_plot.set_xticks(ax_plot.get_xticks()[1:-1], ['Low', 'Medium', 'High'], size=7)
+    except:
+        pass
+    try:
+        if scatterplot_structure._y_axis_labels is not None:
+            ax_plot.locator_params(axis='y', nbins=len(scatterplot_structure._y_axis_labels))
+            ax_plot.set_yticks(ax_plot.get_yticks()[1:-1], scatterplot_structure._y_axis_labels, size=7, rotation=90)
+        else:
+            scatterplot_structure._y_axis_labels
+            ax_plot.set_yticks(ax_plot.get_yticks()[1:-1], ['Low', 'Medium', 'High'], size=7, rotation=90)
+    except:
+        pass
+    if scatterplot_structure._show_diagonal:
+        ax_plot.plot([xlims[0], xlims[1]], [ylims[0], ylims[1]], color='k', linestyle='dashed', linewidth=1, alpha=0.3)
+    alignment = {'horizontalalignment': 'left', 'verticalalignment': 'top'}
+    total_top_terms = scatterplot_structure.top_terms_length * 2 + 2
+    if not scatterplot_structure._ignore_categories:
+        yp = [i / total_top_terms for i in range(total_top_terms)]
+        yp.reverse()
+        ax_cat.text(0.0, yp[0], 'Top ' + info['category_name'], weight='bold', size='medium', **alignment)
+        for i, term in enumerate(info['category_terms']):
+            ax_cat.text(0.0, yp[i + 1], term, size='small', **alignment)
+        ax_cat.text(0.0, yp[scatterplot_structure.top_terms_length + 1], 'Top ' + info['not_category_name'], weight='bold', size='medium', **alignment)
+        for i, term in enumerate(info['not_category_terms']):
+            axs[1].text(0.0, yp[i + scatterplot_structure + 2], term, size='small', **alignment)
+        ax_cat.spines.right.set_visible(False)
+        ax_cat.spines.top.set_visible(False)
+        ax_cat.spines.bottom.set_visible(False)
+        ax_cat.spines.left.set_visible(False)
+        ax_cat.set_xticks([])
+        ax_cat.set_yticks([])
+    if scatterplot_structure._show_characteristic:
+        yp = [i / total_top_terms + 2 for i in range(total_top_terms + 2)]
+        yp.reverse()
+        ax_char.text(0.0, yp[0], 'Characteristic', weight='bold', size='medium', **alignment)
+        characteristic_terms = list(df.sort_values('bg', axis=0, ascending=False).iloc[:total_top_terms + 1].term)
+        for i, term in enumerate(characteristic_terms):
+            ax_char.text(0.0, yp[i + 1], term, size='small', **alignment)
+        ax_char.spines.right.set_visible(False)
+        ax_char.spines.top.set_visible(False)
+        ax_char.spines.bottom.set_visible(False)
+        ax_char.spines.left.set_visible(False)
+        ax_char.set_xticks([])
+        ax_char.set_yticks([])
+    fig.suptitle(f'Document count: {n_docs} - Word count: {n_words}', ha='right')
+    return fig
+

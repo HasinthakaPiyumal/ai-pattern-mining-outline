@@ -1,0 +1,5 @@
+Define the architecture for the AI application idea. Use suitable framworks and libraries to implement this AI App.\n Use frameworks libraries if need such as tensorflow, pytorch, jax, scikit-learn, lightgbm, xgboost, catboost, fastai, rapids-cuml, transformers, sentence-transformers, tokenizers, spacy, nltk, gensim, trl, accelerate, vllm, langchain, llama-index, chroma, faiss, weaviate, pinecone, milvus, qdrant, elasticsearch, haystack, pandas, numpy, dask, polars, datasets, pyarrow, langgraph, autogen, crewai, opendevin, dspy, semantic-kernel, langsmith, promptlayer, wandb, trulens, evals, guardrails-ai, pydantic, gradio, streamlit, openai, instructor-embedding, cohere, text2vec, clip, openclip, blip, blip2, lavis, diffusers, torchvision, opencv-python, fastapi, ray, bentoml, onnxruntime, tensorrt, tqdm, rich, loguru, python-dotenv, joblib, networkx, phidata, openaimultiswarm, lcel, memgpt, vectorhub, llmdatahub... 
+
+Here is project idea:
+
+{project_idea}

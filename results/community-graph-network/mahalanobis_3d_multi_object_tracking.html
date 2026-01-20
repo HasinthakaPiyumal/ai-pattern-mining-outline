@@ -1,0 +1,181 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        
+            
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/dist/vis-network.min.css" integrity="sha512-WgxfT5LWjfszlPHXRmBWHkV2eceiWTOBvrKCNbdgDYTHrT2AeLCGbF4sZlZw3UMN3WtL0tGUoIAKsu8mllg/XA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js" integrity="sha512-LnvoEWDFrqGHlHmDD2101OrLcbsfkrzoSpvtSQtxK3RMnRV0eOkhhBN2dXHKRrUU8p2DGRTk35n4O8nWSVe1mQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+        
+<center>
+<h1></h1>
+</center>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6"
+          crossorigin="anonymous"
+        />
+        <script
+          src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
+          crossorigin="anonymous"
+        ></script>
+
+
+        <center>
+          <h1></h1>
+        </center>
+        <style type="text/css">
+
+             #mynetwork {
+                 width: 100%;
+                 height: 100vh;
+                 background-color: #FFFFFF;
+                 border: 1px solid lightgray;
+                 position: relative;
+                 float: left;
+             }
+
+             
+
+             
+             #config {
+                 float: left;
+                 width: 400px;
+                 height: 600px;
+             }
+             
+
+             
+        </style>
+    </head>
+
+
+    <body>
+        <div class="card" style="width: 100%">
+            
+            
+            <div id="mynetwork" class="card-body"></div>
+        </div>
+
+        
+        
+            <div id="config"></div>
+        
+
+        <script type="text/javascript">
+
+              // initialize global variables.
+              var edges;
+              var nodes;
+              var allNodes;
+              var allEdges;
+              var nodeColors;
+              var originalNodes;
+              var network;
+              var container;
+              var options, data;
+              var filter = {
+                  item : '',
+                  property : '',
+                  value : []
+              };
+
+              
+
+              
+
+              // This method is responsible for drawing the graph, returns the drawn network
+              function drawGraph() {
+                  var container = document.getElementById('mynetwork');
+
+                  
+
+                  // parsing and collecting nodes and edges from the python
+                  nodes = new vis.DataSet([{"color": "#EF476F", "font": {"color": "black"}, "id": "utils.py:isinteger", "label": "isinteger", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e utils.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e isinteger"}, {"color": "#EF476F", "font": {"color": "black"}, "id": "utils.py:isnparray", "label": "isnparray", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e utils.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e isnparray"}, {"color": "#EF476F", "font": {"color": "black"}, "id": "utils.py:is_path_valid", "label": "is_path_valid", "shape": "dot", "size": 20, "title": "\u003cb\u003eFile:\u003c/b\u003e utils.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e is_path_valid"}, {"color": "#EF476F", "font": {"color": "black"}, "id": "utils.py:isstring", "label": "isstring", "shape": "dot", "size": 18, "title": "\u003cb\u003eFile:\u003c/b\u003e utils.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e isstring"}, {"color": "#EF476F", "font": {"color": "black"}, "id": "utils.py:is_path_creatable", "label": "is_path_creatable", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e utils.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e is_path_creatable"}, {"color": "#EF476F", "font": {"color": "black"}, "id": "utils.py:is_path_exists", "label": "is_path_exists", "shape": "dot", "size": 22, "title": "\u003cb\u003eFile:\u003c/b\u003e utils.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e is_path_exists"}, {"color": "#EF476F", "font": {"color": "black"}, "id": "utils.py:is_path_exists_or_creatable", "label": "is_path_exists_or_creatable", "shape": "dot", "size": 20, "title": "\u003cb\u003eFile:\u003c/b\u003e utils.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e is_path_exists_or_creatable"}, {"color": "#EF476F", "font": {"color": "black"}, "id": "utils.py:isfolder", "label": "isfolder", "shape": "dot", "size": 18, "title": "\u003cb\u003eFile:\u003c/b\u003e utils.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e isfolder"}, {"color": "#EF476F", "font": {"color": "black"}, "id": "utils.py:safe_path", "label": "safe_path", "shape": "dot", "size": 22, "title": "\u003cb\u003eFile:\u003c/b\u003e utils.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e safe_path"}, {"color": "#EF476F", "font": {"color": "black"}, "id": "utils.py:fileparts", "label": "fileparts", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e utils.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e fileparts"}, {"color": "#EF476F", "font": {"color": "black"}, "id": "utils.py:mkdir_if_missing", "label": "mkdir_if_missing", "shape": "dot", "size": 28, "title": "\u003cb\u003eFile:\u003c/b\u003e utils.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e mkdir_if_missing"}, {"color": "#EF476F", "font": {"color": "black"}, "id": "utils.py:load_txt_file", "label": "load_txt_file", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e utils.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e load_txt_file"}, {"color": "#EF476F", "font": {"color": "black"}, "id": "utils.py:load_list_from_folder", "label": "load_list_from_folder", "shape": "dot", "size": 32, "title": "\u003cb\u003eFile:\u003c/b\u003e utils.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e load_list_from_folder"}, {"color": "#EF476F", "font": {"color": "black"}, "id": "utils.py:islogical", "label": "islogical", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e utils.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e islogical"}, {"color": "#EF476F", "font": {"color": "black"}, "id": "utils.py:islist", "label": "islist", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e utils.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e islist"}, {"color": "#06D6A0", "font": {"color": "black"}, "id": "get_nuscenes_stats.py:get_mean", "label": "get_mean", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e get_nuscenes_stats.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e get_mean"}, {"color": "#06D6A0", "font": {"color": "black"}, "id": "get_nuscenes_stats.py:rotation_to_positive_z_angle", "label": "rotation_to_positive_z_angle", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e get_nuscenes_stats.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e rotation_to_positive_z_angle"}, {"color": "#06D6A0", "font": {"color": "black"}, "id": "get_nuscenes_stats.py:matching_and_get_diff_stats", "label": "matching_and_get_diff_stats", "shape": "dot", "size": 20, "title": "\u003cb\u003eFile:\u003c/b\u003e get_nuscenes_stats.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e matching_and_get_diff_stats"}, {"color": "#118AB2", "font": {"color": "black"}, "id": "main.py:convert_3dbox_to_8corner", "label": "convert_3dbox_to_8corner", "shape": "dot", "size": 18, "title": "\u003cb\u003eFile:\u003c/b\u003e main.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e convert_3dbox_to_8corner"}, {"color": "#118AB2", "font": {"color": "black"}, "id": "main.py:iou3d", "label": "iou3d", "shape": "dot", "size": 22, "title": "\u003cb\u003eFile:\u003c/b\u003e main.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e iou3d"}, {"color": "#06D6A0", "font": {"color": "black"}, "id": "get_nuscenes_stats.py:\u003cmodule\u003e", "label": "\u003cmodule\u003e", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e get_nuscenes_stats.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e \u003cmodule\u003e"}, {"color": "#118AB2", "font": {"color": "black"}, "id": "main.py:polygon_clip", "label": "polygon_clip", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e main.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e polygon_clip"}, {"color": "#118AB2", "font": {"color": "black"}, "id": "main.py:inside", "label": "inside", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e main.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e inside"}, {"color": "#118AB2", "font": {"color": "black"}, "id": "main.py:computeIntersection", "label": "computeIntersection", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e main.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e computeIntersection"}, {"color": "#118AB2", "font": {"color": "black"}, "id": "main.py:poly_area", "label": "poly_area", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e main.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e poly_area"}, {"color": "#118AB2", "font": {"color": "black"}, "id": "main.py:convex_hull_intersection", "label": "convex_hull_intersection", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e main.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e convex_hull_intersection"}, {"color": "#118AB2", "font": {"color": "black"}, "id": "main.py:box3d_vol", "label": "box3d_vol", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e main.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e box3d_vol"}, {"color": "#118AB2", "font": {"color": "black"}, "id": "main.py:roty", "label": "roty", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e main.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e roty"}, {"color": "#118AB2", "font": {"color": "black"}, "id": "main.py:KalmanBoxTracker.__init__", "label": "KalmanBoxTracker.__init__", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e main.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e KalmanBoxTracker.__init__"}, {"color": "#FFD166", "font": {"color": "black"}, "id": "covariance.py:Covariance", "label": "Covariance", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e covariance.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e Covariance"}, {"color": "#118AB2", "font": {"color": "black"}, "id": "main.py:diff_orientation_correction", "label": "diff_orientation_correction", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e main.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e diff_orientation_correction"}, {"color": "#118AB2", "font": {"color": "black"}, "id": "main.py:angle_in_range", "label": "angle_in_range", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e main.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e angle_in_range"}, {"color": "#118AB2", "font": {"color": "black"}, "id": "main.py:associate_detections_to_trackers", "label": "associate_detections_to_trackers", "shape": "dot", "size": 20, "title": "\u003cb\u003eFile:\u003c/b\u003e main.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e associate_detections_to_trackers"}, {"color": "#118AB2", "font": {"color": "black"}, "id": "main.py:greedy_match", "label": "greedy_match", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e main.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e greedy_match"}, {"color": "#118AB2", "font": {"color": "black"}, "id": "main.py:AB3DMOT.update", "label": "AB3DMOT.update", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e main.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e AB3DMOT.update"}, {"color": "#118AB2", "font": {"color": "black"}, "id": "main.py:track_nuscenes", "label": "track_nuscenes", "shape": "dot", "size": 18, "title": "\u003cb\u003eFile:\u003c/b\u003e main.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e track_nuscenes"}, {"color": "#118AB2", "font": {"color": "black"}, "id": "main.py:format_sample_result", "label": "format_sample_result", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e main.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e format_sample_result"}, {"color": "#118AB2", "font": {"color": "black"}, "id": "main.py:\u003cmodule\u003e", "label": "\u003cmodule\u003e", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e main.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e \u003cmodule\u003e"}]);
+                  edges = new vis.DataSet([{"arrows": "to", "color": "#666666", "from": "utils.py:isinteger", "to": "utils.py:isnparray", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "utils.py:is_path_valid", "to": "utils.py:isstring", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "utils.py:is_path_creatable", "to": "utils.py:is_path_valid", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "utils.py:is_path_exists", "to": "utils.py:is_path_valid", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "utils.py:is_path_exists_or_creatable", "to": "utils.py:is_path_exists", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "utils.py:is_path_exists_or_creatable", "to": "utils.py:is_path_creatable", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "utils.py:isfolder", "to": "utils.py:is_path_valid", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "utils.py:safe_path", "to": "utils.py:isstring", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "utils.py:fileparts", "to": "utils.py:safe_path", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "utils.py:mkdir_if_missing", "to": "utils.py:safe_path", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "utils.py:mkdir_if_missing", "to": "utils.py:is_path_exists_or_creatable", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "utils.py:mkdir_if_missing", "to": "utils.py:fileparts", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "utils.py:mkdir_if_missing", "to": "utils.py:is_path_exists", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "utils.py:mkdir_if_missing", "to": "utils.py:mkdir_if_missing", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "utils.py:mkdir_if_missing", "to": "utils.py:isfolder", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "utils.py:load_txt_file", "to": "utils.py:safe_path", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "utils.py:load_txt_file", "to": "utils.py:is_path_exists", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "utils.py:load_list_from_folder", "to": "utils.py:safe_path", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "utils.py:load_list_from_folder", "to": "utils.py:isfolder", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "utils.py:load_list_from_folder", "to": "utils.py:is_path_exists", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "utils.py:load_list_from_folder", "to": "utils.py:islogical", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "utils.py:load_list_from_folder", "to": "utils.py:isinteger", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "utils.py:load_list_from_folder", "to": "utils.py:islist", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "utils.py:load_list_from_folder", "to": "utils.py:isstring", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "utils.py:load_list_from_folder", "to": "utils.py:load_list_from_folder", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "utils.py:load_list_from_folder", "to": "utils.py:is_path_exists_or_creatable", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "get_nuscenes_stats.py:get_mean", "to": "get_nuscenes_stats.py:rotation_to_positive_z_angle", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "get_nuscenes_stats.py:matching_and_get_diff_stats", "to": "get_nuscenes_stats.py:rotation_to_positive_z_angle", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "get_nuscenes_stats.py:matching_and_get_diff_stats", "to": "main.py:convert_3dbox_to_8corner", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "get_nuscenes_stats.py:matching_and_get_diff_stats", "to": "main.py:iou3d", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "main.py:convert_3dbox_to_8corner", "to": "main.py:roty", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "main.py:iou3d", "to": "main.py:poly_area", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "main.py:iou3d", "to": "main.py:convex_hull_intersection", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "main.py:iou3d", "to": "main.py:box3d_vol", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "get_nuscenes_stats.py:\u003cmodule\u003e", "to": "get_nuscenes_stats.py:get_mean", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "get_nuscenes_stats.py:\u003cmodule\u003e", "to": "get_nuscenes_stats.py:matching_and_get_diff_stats", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "main.py:polygon_clip", "to": "main.py:inside", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "main.py:polygon_clip", "to": "main.py:computeIntersection", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "main.py:KalmanBoxTracker.__init__", "to": "covariance.py:Covariance", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "main.py:diff_orientation_correction", "to": "main.py:angle_in_range", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "main.py:associate_detections_to_trackers", "to": "main.py:diff_orientation_correction", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "main.py:associate_detections_to_trackers", "to": "main.py:iou3d", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "main.py:associate_detections_to_trackers", "to": "main.py:greedy_match", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "main.py:AB3DMOT.update", "to": "main.py:convert_3dbox_to_8corner", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "main.py:AB3DMOT.update", "to": "main.py:associate_detections_to_trackers", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "main.py:track_nuscenes", "to": "utils.py:mkdir_if_missing", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "main.py:track_nuscenes", "to": "main.py:format_sample_result", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "main.py:\u003cmodule\u003e", "to": "main.py:track_nuscenes", "width": 1.4}]);
+
+                  nodeColors = {};
+                  allNodes = nodes.get({ returnType: "Object" });
+                  for (nodeId in allNodes) {
+                    nodeColors[nodeId] = allNodes[nodeId].color;
+                  }
+                  allEdges = edges.get({ returnType: "Object" });
+                  // adding nodes and edges to the graph
+                  data = {nodes: nodes, edges: edges};
+
+                  var options = {
+    "configure": {
+        "enabled": true,
+        "filter": [
+            "physics"
+        ]
+    },
+    "edges": {
+        "color": {
+            "inherit": true
+        },
+        "smooth": {
+            "enabled": true,
+            "type": "dynamic"
+        }
+    },
+    "interaction": {
+        "dragNodes": true,
+        "hideEdgesOnDrag": false,
+        "hideNodesOnDrag": false
+    },
+    "physics": {
+        "barnesHut": {
+            "avoidOverlap": 0,
+            "centralGravity": 0.25,
+            "damping": 0.09,
+            "gravitationalConstant": -5000,
+            "springConstant": 0.02,
+            "springLength": 150
+        },
+        "enabled": true,
+        "stabilization": {
+            "enabled": true,
+            "fit": true,
+            "iterations": 1000,
+            "onlyDynamicEdges": false,
+            "updateInterval": 50
+        }
+    }
+};
+
+                  
+
+
+                  
+                  // if this network requires displaying the configure window,
+                  // put it in its div
+                  options.configure["container"] = document.getElementById("config");
+                  
+
+                  network = new vis.Network(container, data, options);
+
+                  
+
+                  
+
+                  
+
+
+                  
+
+                  return network;
+
+              }
+              drawGraph();
+        </script>
+    
+<script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+
+</body>
+</html>

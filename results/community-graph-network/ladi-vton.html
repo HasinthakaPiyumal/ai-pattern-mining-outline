@@ -1,0 +1,181 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        
+            
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/dist/vis-network.min.css" integrity="sha512-WgxfT5LWjfszlPHXRmBWHkV2eceiWTOBvrKCNbdgDYTHrT2AeLCGbF4sZlZw3UMN3WtL0tGUoIAKsu8mllg/XA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js" integrity="sha512-LnvoEWDFrqGHlHmDD2101OrLcbsfkrzoSpvtSQtxK3RMnRV0eOkhhBN2dXHKRrUU8p2DGRTk35n4O8nWSVe1mQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+        
+<center>
+<h1></h1>
+</center>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6"
+          crossorigin="anonymous"
+        />
+        <script
+          src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
+          crossorigin="anonymous"
+        ></script>
+
+
+        <center>
+          <h1></h1>
+        </center>
+        <style type="text/css">
+
+             #mynetwork {
+                 width: 100%;
+                 height: 100vh;
+                 background-color: #FFFFFF;
+                 border: 1px solid lightgray;
+                 position: relative;
+                 float: left;
+             }
+
+             
+
+             
+             #config {
+                 float: left;
+                 width: 400px;
+                 height: 600px;
+             }
+             
+
+             
+        </style>
+    </head>
+
+
+    <body>
+        <div class="card" style="width: 100%">
+            
+            
+            <div id="mynetwork" class="card-body"></div>
+        </div>
+
+        
+        
+            <div id="config"></div>
+        
+
+        <script type="text/javascript">
+
+              // initialize global variables.
+              var edges;
+              var nodes;
+              var allNodes;
+              var allEdges;
+              var nodeColors;
+              var originalNodes;
+              var network;
+              var container;
+              var options, data;
+              var filter = {
+                  item : '',
+                  property : '',
+                  value : []
+              };
+
+              
+
+              
+
+              // This method is responsible for drawing the graph, returns the drawn network
+              function drawGraph() {
+                  var container = document.getElementById('mynetwork');
+
+                  
+
+                  // parsing and collecting nodes and edges from the python
+                  nodes = new vis.DataSet([{"color": "#EF476F", "font": {"color": "black"}, "id": "hubconf.py:inversion_adapter", "label": "inversion_adapter", "shape": "dot", "size": 24, "title": "\u003cb\u003eFile:\u003c/b\u003e hubconf.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e inversion_adapter"}, {"color": "#06D6A0", "font": {"color": "black"}, "id": "src/models/inversion_adapter.py:InversionAdapter", "label": "InversionAdapter", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e src/models/inversion_adapter.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e InversionAdapter"}, {"color": "#EF476F", "font": {"color": "black"}, "id": "hubconf.py:emasc", "label": "emasc", "shape": "dot", "size": 18, "title": "\u003cb\u003eFile:\u003c/b\u003e hubconf.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e emasc"}, {"color": "#118AB2", "font": {"color": "black"}, "id": "src/models/emasc.py:EMASC", "label": "EMASC", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e src/models/emasc.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e EMASC"}, {"color": "#EF476F", "font": {"color": "black"}, "id": "hubconf.py:warping_module", "label": "warping_module", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e hubconf.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e warping_module"}, {"color": "#FFD166", "font": {"color": "black"}, "id": "src/models/ConvNet_TPS.py:ConvNet_TPS", "label": "ConvNet_TPS", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e src/models/ConvNet_TPS.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e ConvNet_TPS"}, {"color": "#073B4C", "font": {"color": "black"}, "id": "src/models/UNet.py:UNetVanilla", "label": "UNetVanilla", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e src/models/UNet.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e UNetVanilla"}, {"color": "#9B5DE5", "font": {"color": "black"}, "id": "src/train_vto.py:main", "label": "main", "shape": "dot", "size": 30, "title": "\u003cb\u003eFile:\u003c/b\u003e src/train_vto.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e main"}, {"color": "#9B5DE5", "font": {"color": "black"}, "id": "src/train_vto.py:parse_args", "label": "parse_args", "shape": "dot", "size": 26, "title": "\u003cb\u003eFile:\u003c/b\u003e src/train_vto.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e parse_args"}, {"color": "#9B5DE5", "font": {"color": "black"}, "id": "src/train_vto.py:\u003cmodule\u003e", "label": "\u003cmodule\u003e", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e src/train_vto.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e \u003cmodule\u003e"}, {"color": "#F15BB5", "font": {"color": "black"}, "id": "src/train_tps.py:main", "label": "main", "shape": "dot", "size": 22, "title": "\u003cb\u003eFile:\u003c/b\u003e src/train_tps.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e main"}, {"color": "#F15BB5", "font": {"color": "black"}, "id": "src/train_tps.py:extract_images", "label": "extract_images", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e src/train_tps.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e extract_images"}, {"color": "#F15BB5", "font": {"color": "black"}, "id": "src/train_tps.py:training_loop_tps", "label": "training_loop_tps", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e src/train_tps.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e training_loop_tps"}, {"color": "#F15BB5", "font": {"color": "black"}, "id": "src/train_tps.py:compute_metric", "label": "compute_metric", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e src/train_tps.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e compute_metric"}, {"color": "#F15BB5", "font": {"color": "black"}, "id": "src/train_tps.py:training_loop_refinement", "label": "training_loop_refinement", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e src/train_tps.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e training_loop_refinement"}, {"color": "#F15BB5", "font": {"color": "black"}, "id": "src/train_tps.py:\u003cmodule\u003e", "label": "\u003cmodule\u003e", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e src/train_tps.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e \u003cmodule\u003e"}, {"color": "#00BBF9", "font": {"color": "black"}, "id": "src/inference.py:main", "label": "main", "shape": "dot", "size": 18, "title": "\u003cb\u003eFile:\u003c/b\u003e src/inference.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e main"}, {"color": "#00F5D4", "font": {"color": "black"}, "id": "src/utils/encode_text_word_embedding.py:encode_text_word_embedding", "label": "encode_text_word_embedding", "shape": "dot", "size": 18, "title": "\u003cb\u003eFile:\u003c/b\u003e src/utils/encode_text_word_embedding.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e encode_text_word_embedding"}, {"color": "#00BBF9", "font": {"color": "black"}, "id": "src/inference.py:\u003cmodule\u003e", "label": "\u003cmodule\u003e", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e src/inference.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e \u003cmodule\u003e"}, {"color": "#FEE440", "font": {"color": "black"}, "id": "src/train_emasc.py:main", "label": "main", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e src/train_emasc.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e main"}, {"color": "#FEE440", "font": {"color": "black"}, "id": "src/train_emasc.py:\u003cmodule\u003e", "label": "\u003cmodule\u003e", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e src/train_emasc.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e \u003cmodule\u003e"}, {"color": "#FF7D00", "font": {"color": "black"}, "id": "src/train_inversion_adapter.py:main", "label": "main", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e src/train_inversion_adapter.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e main"}, {"color": "#FF7D00", "font": {"color": "black"}, "id": "src/train_inversion_adapter.py:\u003cmodule\u003e", "label": "\u003cmodule\u003e", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e src/train_inversion_adapter.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e \u003cmodule\u003e"}, {"color": "#FF006E", "font": {"color": "black"}, "id": "src/eval.py:main", "label": "main", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e src/eval.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e main"}, {"color": "#FF006E", "font": {"color": "black"}, "id": "src/eval.py:\u003cmodule\u003e", "label": "\u003cmodule\u003e", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e src/eval.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e \u003cmodule\u003e"}, {"color": "#EF476F", "font": {"color": "black"}, "id": "src/utils/compute_cloth_clip_features.py:main", "label": "main", "shape": "dot", "size": 18, "title": "\u003cb\u003eFile:\u003c/b\u003e src/utils/compute_cloth_clip_features.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e main"}, {"color": "#06D6A0", "font": {"color": "black"}, "id": "src/dataset/dresscode.py:DressCodeDataset", "label": "DressCodeDataset", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e src/dataset/dresscode.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e DressCodeDataset"}, {"color": "#118AB2", "font": {"color": "black"}, "id": "src/dataset/vitonhd.py:VitonHDDataset", "label": "VitonHDDataset", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e src/dataset/vitonhd.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e VitonHDDataset"}, {"color": "#EF476F", "font": {"color": "black"}, "id": "src/utils/compute_cloth_clip_features.py:\u003cmodule\u003e", "label": "\u003cmodule\u003e", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e src/utils/compute_cloth_clip_features.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e \u003cmodule\u003e"}, {"color": "#FFD166", "font": {"color": "black"}, "id": "src/utils/val_metrics.py:compute_metrics", "label": "compute_metrics", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e src/utils/val_metrics.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e compute_metrics"}, {"color": "#073B4C", "font": {"color": "black"}, "id": "src/utils/generate_fid_stats.py:make_custom_stats", "label": "make_custom_stats", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e src/utils/generate_fid_stats.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e make_custom_stats"}, {"color": "#FFD166", "font": {"color": "black"}, "id": "src/utils/val_metrics.py:\u003cmodule\u003e", "label": "\u003cmodule\u003e", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e src/utils/val_metrics.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e \u003cmodule\u003e"}, {"color": "#9B5DE5", "font": {"color": "black"}, "id": "src/utils/image_from_pipe.py:generate_images_from_tryon_pipe", "label": "generate_images_from_tryon_pipe", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e src/utils/image_from_pipe.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e generate_images_from_tryon_pipe"}, {"color": "#9B5DE5", "font": {"color": "black"}, "id": "src/utils/image_from_pipe.py:generate_images_inversion_adapter", "label": "generate_images_inversion_adapter", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e src/utils/image_from_pipe.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e generate_images_inversion_adapter"}, {"color": "#9B5DE5", "font": {"color": "black"}, "id": "src/utils/image_from_pipe.py:extract_save_vae_images", "label": "extract_save_vae_images", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e src/utils/image_from_pipe.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e extract_save_vae_images"}, {"color": "#F15BB5", "font": {"color": "black"}, "id": "src/utils/data_utils.py:mask_features", "label": "mask_features", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e src/utils/data_utils.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e mask_features"}, {"color": "#06D6A0", "font": {"color": "black"}, "id": "src/dataset/dresscode.py:DressCodeDataset.__getitem__", "label": "DressCodeDataset.__getitem__", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e src/dataset/dresscode.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e DressCodeDataset.__getitem__"}, {"color": "#00BBF9", "font": {"color": "black"}, "id": "src/utils/posemap.py:kpoint_to_heatmap", "label": "kpoint_to_heatmap", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e src/utils/posemap.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e kpoint_to_heatmap"}, {"color": "#118AB2", "font": {"color": "black"}, "id": "src/dataset/vitonhd.py:VitonHDDataset.__getitem__", "label": "VitonHDDataset.__getitem__", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e src/dataset/vitonhd.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e VitonHDDataset.__getitem__"}, {"color": "#00BBF9", "font": {"color": "black"}, "id": "src/utils/posemap.py:get_coco_body25_mapping", "label": "get_coco_body25_mapping", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e src/utils/posemap.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e get_coco_body25_mapping"}, {"color": "#00F5D4", "font": {"color": "black"}, "id": "src/vto_pipelines/tryon_pipe.py:StableDiffusionTryOnePipeline.__call__", "label": "StableDiffusionTryOnePipeline.__call__", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e src/vto_pipelines/tryon_pipe.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e StableDiffusionTryOnePipeline.__call__"}, {"color": "#FFD166", "font": {"color": "black"}, "id": "src/models/ConvNet_TPS.py:FeatureExtraction.__init__", "label": "FeatureExtraction.__init__", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e src/models/ConvNet_TPS.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e FeatureExtraction.__init__"}, {"color": "#FFD166", "font": {"color": "black"}, "id": "src/models/ConvNet_TPS.py:init_weights", "label": "init_weights", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e src/models/ConvNet_TPS.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e init_weights"}, {"color": "#FFD166", "font": {"color": "black"}, "id": "src/models/ConvNet_TPS.py:TPSGridGen.__init__", "label": "TPSGridGen.__init__", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e src/models/ConvNet_TPS.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e TPSGridGen.__init__"}, {"color": "#FFD166", "font": {"color": "black"}, "id": "src/models/ConvNet_TPS.py:compute_partial_repr", "label": "compute_partial_repr", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e src/models/ConvNet_TPS.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e compute_partial_repr"}]);
+                  edges = new vis.DataSet([{"arrows": "to", "color": "#666666", "from": "hubconf.py:inversion_adapter", "to": "src/models/inversion_adapter.py:InversionAdapter", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "hubconf.py:emasc", "to": "src/models/emasc.py:EMASC", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "hubconf.py:warping_module", "to": "src/models/ConvNet_TPS.py:ConvNet_TPS", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "hubconf.py:warping_module", "to": "src/models/UNet.py:UNetVanilla", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "src/train_vto.py:main", "to": "src/train_vto.py:parse_args", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "src/train_vto.py:main", "to": "hubconf.py:inversion_adapter", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "src/train_vto.py:\u003cmodule\u003e", "to": "src/train_vto.py:main", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "src/train_tps.py:main", "to": "src/train_vto.py:parse_args", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "src/train_tps.py:main", "to": "src/train_tps.py:extract_images", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "src/train_tps.py:main", "to": "src/train_tps.py:training_loop_tps", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "src/train_tps.py:main", "to": "src/train_tps.py:compute_metric", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "src/train_tps.py:main", "to": "src/train_tps.py:training_loop_refinement", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "src/train_tps.py:\u003cmodule\u003e", "to": "src/train_vto.py:main", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "src/inference.py:main", "to": "src/train_vto.py:parse_args", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "src/inference.py:main", "to": "hubconf.py:inversion_adapter", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "src/inference.py:main", "to": "src/utils/encode_text_word_embedding.py:encode_text_word_embedding", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "src/inference.py:\u003cmodule\u003e", "to": "src/train_vto.py:main", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "src/train_emasc.py:main", "to": "src/train_vto.py:parse_args", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "src/train_emasc.py:main", "to": "hubconf.py:emasc", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "src/train_emasc.py:\u003cmodule\u003e", "to": "src/train_vto.py:main", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "src/train_inversion_adapter.py:main", "to": "src/train_vto.py:parse_args", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "src/train_inversion_adapter.py:main", "to": "hubconf.py:inversion_adapter", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "src/train_inversion_adapter.py:\u003cmodule\u003e", "to": "src/train_vto.py:main", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "src/eval.py:main", "to": "src/train_vto.py:parse_args", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "src/eval.py:\u003cmodule\u003e", "to": "src/train_vto.py:main", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "src/utils/compute_cloth_clip_features.py:main", "to": "src/train_vto.py:parse_args", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "src/utils/compute_cloth_clip_features.py:main", "to": "src/dataset/dresscode.py:DressCodeDataset", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "src/utils/compute_cloth_clip_features.py:main", "to": "src/dataset/vitonhd.py:VitonHDDataset", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "src/utils/compute_cloth_clip_features.py:\u003cmodule\u003e", "to": "src/train_vto.py:main", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "src/utils/val_metrics.py:compute_metrics", "to": "src/utils/generate_fid_stats.py:make_custom_stats", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "src/utils/val_metrics.py:\u003cmodule\u003e", "to": "src/utils/val_metrics.py:compute_metrics", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "src/utils/image_from_pipe.py:generate_images_from_tryon_pipe", "to": "hubconf.py:inversion_adapter", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "src/utils/image_from_pipe.py:generate_images_from_tryon_pipe", "to": "src/utils/encode_text_word_embedding.py:encode_text_word_embedding", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "src/utils/image_from_pipe.py:generate_images_inversion_adapter", "to": "hubconf.py:inversion_adapter", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "src/utils/image_from_pipe.py:generate_images_inversion_adapter", "to": "src/utils/encode_text_word_embedding.py:encode_text_word_embedding", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "src/utils/image_from_pipe.py:extract_save_vae_images", "to": "hubconf.py:emasc", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "src/utils/image_from_pipe.py:extract_save_vae_images", "to": "src/utils/data_utils.py:mask_features", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "src/dataset/dresscode.py:DressCodeDataset.__getitem__", "to": "src/utils/posemap.py:kpoint_to_heatmap", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "src/dataset/vitonhd.py:VitonHDDataset.__getitem__", "to": "src/utils/posemap.py:get_coco_body25_mapping", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "src/dataset/vitonhd.py:VitonHDDataset.__getitem__", "to": "src/utils/posemap.py:kpoint_to_heatmap", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "src/vto_pipelines/tryon_pipe.py:StableDiffusionTryOnePipeline.__call__", "to": "src/utils/data_utils.py:mask_features", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "src/models/ConvNet_TPS.py:FeatureExtraction.__init__", "to": "src/models/ConvNet_TPS.py:init_weights", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "src/models/ConvNet_TPS.py:TPSGridGen.__init__", "to": "src/models/ConvNet_TPS.py:compute_partial_repr", "width": 1.4}]);
+
+                  nodeColors = {};
+                  allNodes = nodes.get({ returnType: "Object" });
+                  for (nodeId in allNodes) {
+                    nodeColors[nodeId] = allNodes[nodeId].color;
+                  }
+                  allEdges = edges.get({ returnType: "Object" });
+                  // adding nodes and edges to the graph
+                  data = {nodes: nodes, edges: edges};
+
+                  var options = {
+    "configure": {
+        "enabled": true,
+        "filter": [
+            "physics"
+        ]
+    },
+    "edges": {
+        "color": {
+            "inherit": true
+        },
+        "smooth": {
+            "enabled": true,
+            "type": "dynamic"
+        }
+    },
+    "interaction": {
+        "dragNodes": true,
+        "hideEdgesOnDrag": false,
+        "hideNodesOnDrag": false
+    },
+    "physics": {
+        "barnesHut": {
+            "avoidOverlap": 0,
+            "centralGravity": 0.25,
+            "damping": 0.09,
+            "gravitationalConstant": -5000,
+            "springConstant": 0.02,
+            "springLength": 150
+        },
+        "enabled": true,
+        "stabilization": {
+            "enabled": true,
+            "fit": true,
+            "iterations": 1000,
+            "onlyDynamicEdges": false,
+            "updateInterval": 50
+        }
+    }
+};
+
+                  
+
+
+                  
+                  // if this network requires displaying the configure window,
+                  // put it in its div
+                  options.configure["container"] = document.getElementById("config");
+                  
+
+                  network = new vis.Network(container, data, options);
+
+                  
+
+                  
+
+                  
+
+
+                  
+
+                  return network;
+
+              }
+              drawGraph();
+        </script>
+    
+<script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+
+</body>
+</html>

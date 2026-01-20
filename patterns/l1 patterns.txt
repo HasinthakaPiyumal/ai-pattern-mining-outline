@@ -1,0 +1,15 @@
+Forecasting with Classical Models
+LLM-based User Intent Extraction
+LLM Fine Tunning, Training & Alignment
+LLM-based Context Management
+Evaluating LLM Results
+LLM-based Multimodal Generative Prompting
+LLM-based Planning, XoT, ReAct, or Reasoning
+Model Abstraction
+Agent Architecture
+None 
+Preprocessing Text and Numerical Data
+Enabling Reliability, Explaiability, or Robustness
+Retrieval Augmented Generation(RAG)
+Performing Structured Output & Formatting for LLMs
+Using Tools with LLMs

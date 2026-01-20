@@ -1,0 +1,181 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        
+            
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/dist/vis-network.min.css" integrity="sha512-WgxfT5LWjfszlPHXRmBWHkV2eceiWTOBvrKCNbdgDYTHrT2AeLCGbF4sZlZw3UMN3WtL0tGUoIAKsu8mllg/XA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js" integrity="sha512-LnvoEWDFrqGHlHmDD2101OrLcbsfkrzoSpvtSQtxK3RMnRV0eOkhhBN2dXHKRrUU8p2DGRTk35n4O8nWSVe1mQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+        
+<center>
+<h1></h1>
+</center>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6"
+          crossorigin="anonymous"
+        />
+        <script
+          src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
+          crossorigin="anonymous"
+        ></script>
+
+
+        <center>
+          <h1></h1>
+        </center>
+        <style type="text/css">
+
+             #mynetwork {
+                 width: 100%;
+                 height: 100vh;
+                 background-color: #FFFFFF;
+                 border: 1px solid lightgray;
+                 position: relative;
+                 float: left;
+             }
+
+             
+
+             
+             #config {
+                 float: left;
+                 width: 400px;
+                 height: 600px;
+             }
+             
+
+             
+        </style>
+    </head>
+
+
+    <body>
+        <div class="card" style="width: 100%">
+            
+            
+            <div id="mynetwork" class="card-body"></div>
+        </div>
+
+        
+        
+            <div id="config"></div>
+        
+
+        <script type="text/javascript">
+
+              // initialize global variables.
+              var edges;
+              var nodes;
+              var allNodes;
+              var allEdges;
+              var nodeColors;
+              var originalNodes;
+              var network;
+              var container;
+              var options, data;
+              var filter = {
+                  item : '',
+                  property : '',
+                  value : []
+              };
+
+              
+
+              
+
+              // This method is responsible for drawing the graph, returns the drawn network
+              function drawGraph() {
+                  var container = document.getElementById('mynetwork');
+
+                  
+
+                  // parsing and collecting nodes and edges from the python
+                  nodes = new vis.DataSet([{"color": "#EF476F", "font": {"color": "black"}, "id": "examples/train_fnn_on_movielens_estimator.py:model_fn", "label": "model_fn", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e examples/train_fnn_on_movielens_estimator.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e model_fn"}, {"color": "#EF476F", "font": {"color": "black"}, "id": "examples/train_fnn_on_movielens_estimator.py:build_columns", "label": "build_columns", "shape": "dot", "size": 34, "title": "\u003cb\u003eFile:\u003c/b\u003e examples/train_fnn_on_movielens_estimator.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e build_columns"}, {"color": "#EF476F", "font": {"color": "black"}, "id": "examples/train_fnn_on_movielens_estimator.py:main", "label": "main", "shape": "dot", "size": 26, "title": "\u003cb\u003eFile:\u003c/b\u003e examples/train_fnn_on_movielens_estimator.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e main"}, {"color": "#EF476F", "font": {"color": "black"}, "id": "examples/train_fnn_on_movielens_estimator.py:build_estimator", "label": "build_estimator", "shape": "dot", "size": 22, "title": "\u003cb\u003eFile:\u003c/b\u003e examples/train_fnn_on_movielens_estimator.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e build_estimator"}, {"color": "#EF476F", "font": {"color": "black"}, "id": "examples/train_fnn_on_movielens_estimator.py:\u003cmodule\u003e", "label": "\u003cmodule\u003e", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e examples/train_fnn_on_movielens_estimator.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e \u003cmodule\u003e"}, {"color": "#06D6A0", "font": {"color": "black"}, "id": "examples/train_fm_on_movielens_estimator.py:model_fn", "label": "model_fn", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e examples/train_fm_on_movielens_estimator.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e model_fn"}, {"color": "#06D6A0", "font": {"color": "black"}, "id": "examples/train_fm_on_movielens_estimator.py:export_saved_model", "label": "export_saved_model", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e examples/train_fm_on_movielens_estimator.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e export_saved_model"}, {"color": "#06D6A0", "font": {"color": "black"}, "id": "examples/train_fm_on_movielens_estimator.py:main", "label": "main", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e examples/train_fm_on_movielens_estimator.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e main"}, {"color": "#06D6A0", "font": {"color": "black"}, "id": "examples/train_fm_on_movielens_estimator.py:\u003cmodule\u003e", "label": "\u003cmodule\u003e", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e examples/train_fm_on_movielens_estimator.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e \u003cmodule\u003e"}, {"color": "#118AB2", "font": {"color": "black"}, "id": "examples/train_deepfm_on_movielens_keras.py:main", "label": "main", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e examples/train_deepfm_on_movielens_keras.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e main"}, {"color": "#118AB2", "font": {"color": "black"}, "id": "examples/train_deepfm_on_movielens_keras.py:\u003cmodule\u003e", "label": "\u003cmodule\u003e", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e examples/train_deepfm_on_movielens_keras.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e \u003cmodule\u003e"}, {"color": "#FFD166", "font": {"color": "black"}, "id": "examples/train_deepfm_on_movielens_estimator.py:model_fn", "label": "model_fn", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e examples/train_deepfm_on_movielens_estimator.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e model_fn"}, {"color": "#FFD166", "font": {"color": "black"}, "id": "examples/train_deepfm_on_movielens_estimator.py:main", "label": "main", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e examples/train_deepfm_on_movielens_estimator.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e main"}, {"color": "#FFD166", "font": {"color": "black"}, "id": "examples/train_deepfm_on_movielens_estimator.py:\u003cmodule\u003e", "label": "\u003cmodule\u003e", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e examples/train_deepfm_on_movielens_estimator.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e \u003cmodule\u003e"}, {"color": "#073B4C", "font": {"color": "black"}, "id": "examples/train_gcn_on_cora_keras.py:train_model", "label": "train_model", "shape": "dot", "size": 18, "title": "\u003cb\u003eFile:\u003c/b\u003e examples/train_gcn_on_cora_keras.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e train_model"}, {"color": "#073B4C", "font": {"color": "black"}, "id": "examples/train_gcn_on_cora_keras.py:build_model", "label": "build_model", "shape": "dot", "size": 18, "title": "\u003cb\u003eFile:\u003c/b\u003e examples/train_gcn_on_cora_keras.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e build_model"}, {"color": "#073B4C", "font": {"color": "black"}, "id": "examples/train_gcn_on_cora_keras.py:\u003cmodule\u003e", "label": "\u003cmodule\u003e", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e examples/train_gcn_on_cora_keras.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e \u003cmodule\u003e"}, {"color": "#9B5DE5", "font": {"color": "black"}, "id": "examples/train_wdl_on_movielens_estimator.py:model_fn", "label": "model_fn", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e examples/train_wdl_on_movielens_estimator.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e model_fn"}, {"color": "#9B5DE5", "font": {"color": "black"}, "id": "examples/train_wdl_on_movielens_estimator.py:cross_product_transformation", "label": "cross_product_transformation", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e examples/train_wdl_on_movielens_estimator.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e cross_product_transformation"}, {"color": "#9B5DE5", "font": {"color": "black"}, "id": "examples/train_wdl_on_movielens_estimator.py:main", "label": "main", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e examples/train_wdl_on_movielens_estimator.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e main"}, {"color": "#9B5DE5", "font": {"color": "black"}, "id": "examples/train_wdl_on_movielens_estimator.py:\u003cmodule\u003e", "label": "\u003cmodule\u003e", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e examples/train_wdl_on_movielens_estimator.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e \u003cmodule\u003e"}, {"color": "#F15BB5", "font": {"color": "black"}, "id": "examples/train_mmoe_on_synthetic_estimator.py:model_fn", "label": "model_fn", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e examples/train_mmoe_on_synthetic_estimator.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e model_fn"}, {"color": "#F15BB5", "font": {"color": "black"}, "id": "examples/train_mmoe_on_synthetic_estimator.py:main", "label": "main", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e examples/train_mmoe_on_synthetic_estimator.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e main"}, {"color": "#F15BB5", "font": {"color": "black"}, "id": "examples/train_mmoe_on_synthetic_estimator.py:\u003cmodule\u003e", "label": "\u003cmodule\u003e", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e examples/train_mmoe_on_synthetic_estimator.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e \u003cmodule\u003e"}, {"color": "#00BBF9", "font": {"color": "black"}, "id": "examples/train_transformer_on_imdb_keras.py:train_model", "label": "train_model", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e examples/train_transformer_on_imdb_keras.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e train_model"}, {"color": "#00BBF9", "font": {"color": "black"}, "id": "examples/train_transformer_on_imdb_keras.py:load_dataset", "label": "load_dataset", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e examples/train_transformer_on_imdb_keras.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e load_dataset"}, {"color": "#00BBF9", "font": {"color": "black"}, "id": "examples/train_transformer_on_imdb_keras.py:\u003cmodule\u003e", "label": "\u003cmodule\u003e", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e examples/train_transformer_on_imdb_keras.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e \u003cmodule\u003e"}, {"color": "#00F5D4", "font": {"color": "black"}, "id": "tests/keras/test_din.py:TestDIN.test_din", "label": "TestDIN.test_din", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e tests/keras/test_din.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e TestDIN.test_din"}, {"color": "#FEE440", "font": {"color": "black"}, "id": "tests/keras/test_fm.py:TestFM.test_model", "label": "TestFM.test_model", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e tests/keras/test_fm.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e TestFM.test_model"}, {"color": "#FF7D00", "font": {"color": "black"}, "id": "tests/keras/test_deepfm.py:TestDeepFM.test_model_train", "label": "TestDeepFM.test_model_train", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e tests/keras/test_deepfm.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e TestDeepFM.test_model_train"}, {"color": "#FF006E", "font": {"color": "black"}, "id": "tests/keras/test_dcn.py:TestDCN.test_cross_full_matrix", "label": "TestDCN.test_cross_full_matrix", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e tests/keras/test_dcn.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e TestDCN.test_cross_full_matrix"}, {"color": "#EF476F", "font": {"color": "black"}, "id": "deep_recommenders/keras/models/ranking/dcn.py:Cross", "label": "Cross", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e deep_recommenders/keras/models/ranking/dcn.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e Cross"}, {"color": "#FF006E", "font": {"color": "black"}, "id": "tests/keras/test_dcn.py:TestDCN.get_model", "label": "TestDCN.get_model", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e tests/keras/test_dcn.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e TestDCN.get_model"}, {"color": "#06D6A0", "font": {"color": "black"}, "id": "tests/keras/test_xdeepfm.py:TestXDeepFM.test_invalid_inputs_type", "label": "TestXDeepFM.test_invalid_inputs_type", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e tests/keras/test_xdeepfm.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e TestXDeepFM.test_invalid_inputs_type"}, {"color": "#118AB2", "font": {"color": "black"}, "id": "deep_recommenders/keras/models/ranking/xdeepfm.py:CIN", "label": "CIN", "shape": "dot", "size": 22, "title": "\u003cb\u003eFile:\u003c/b\u003e deep_recommenders/keras/models/ranking/xdeepfm.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e CIN"}, {"color": "#06D6A0", "font": {"color": "black"}, "id": "tests/keras/test_xdeepfm.py:TestXDeepFM.test_invalid_inputs_ndim", "label": "TestXDeepFM.test_invalid_inputs_ndim", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e tests/keras/test_xdeepfm.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e TestXDeepFM.test_invalid_inputs_ndim"}, {"color": "#06D6A0", "font": {"color": "black"}, "id": "tests/keras/test_xdeepfm.py:TestXDeepFM.test_outputs", "label": "TestXDeepFM.test_outputs", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e tests/keras/test_xdeepfm.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e TestXDeepFM.test_outputs"}, {"color": "#06D6A0", "font": {"color": "black"}, "id": "tests/keras/test_xdeepfm.py:TestXDeepFM.test_bias", "label": "TestXDeepFM.test_bias", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e tests/keras/test_xdeepfm.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e TestXDeepFM.test_bias"}, {"color": "#06D6A0", "font": {"color": "black"}, "id": "tests/keras/test_xdeepfm.py:TestXDeepFM.get_model", "label": "TestXDeepFM.get_model", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e tests/keras/test_xdeepfm.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e TestXDeepFM.get_model"}, {"color": "#FFD166", "font": {"color": "black"}, "id": "tests/estimator/test_mixture_of_experts.py:TestMixtureOfExperts.test_mmoe", "label": "TestMixtureOfExperts.test_mmoe", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e tests/estimator/test_mixture_of_experts.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e TestMixtureOfExperts.test_mmoe"}, {"color": "#073B4C", "font": {"color": "black"}, "id": "tests/estimator/test_esmm.py:TestESMM.test_mmoe", "label": "TestESMM.test_mmoe", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e tests/estimator/test_esmm.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e TestESMM.test_mmoe"}, {"color": "#9B5DE5", "font": {"color": "black"}, "id": "deep_recommenders/keras/models/retrieval/factorized_top_k.py:_exclude", "label": "_exclude", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e deep_recommenders/keras/models/retrieval/factorized_top_k.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e _exclude"}, {"color": "#9B5DE5", "font": {"color": "black"}, "id": "deep_recommenders/keras/models/retrieval/factorized_top_k.py:_take_long_axis", "label": "_take_long_axis", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e deep_recommenders/keras/models/retrieval/factorized_top_k.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e _take_long_axis"}, {"color": "#9B5DE5", "font": {"color": "black"}, "id": "deep_recommenders/keras/models/retrieval/factorized_top_k.py:TopK.query_with_exclusions", "label": "TopK.query_with_exclusions", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e deep_recommenders/keras/models/retrieval/factorized_top_k.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e TopK.query_with_exclusions"}, {"color": "#9B5DE5", "font": {"color": "black"}, "id": "deep_recommenders/keras/models/retrieval/factorized_top_k.py:Streaming.call", "label": "Streaming.call", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e deep_recommenders/keras/models/retrieval/factorized_top_k.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e Streaming.call"}, {"color": "#9B5DE5", "font": {"color": "black"}, "id": "deep_recommenders/keras/models/retrieval/factorized_top_k.py:_wrap_batch_too_small_error", "label": "_wrap_batch_too_small_error", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e deep_recommenders/keras/models/retrieval/factorized_top_k.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e _wrap_batch_too_small_error"}, {"color": "#F15BB5", "font": {"color": "black"}, "id": "deep_recommenders/keras/models/retrieval/sbcnm.py:HardNegativeMining.call", "label": "HardNegativeMining.call", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e deep_recommenders/keras/models/retrieval/sbcnm.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e HardNegativeMining.call"}, {"color": "#F15BB5", "font": {"color": "black"}, "id": "deep_recommenders/keras/models/retrieval/sbcnm.py:_gather_elements_along_row", "label": "_gather_elements_along_row", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e deep_recommenders/keras/models/retrieval/sbcnm.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e _gather_elements_along_row"}, {"color": "#00BBF9", "font": {"color": "black"}, "id": "deep_recommenders/estimator/models/feature_interaction/fm.py:FM.call", "label": "FM.call", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e deep_recommenders/estimator/models/feature_interaction/fm.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e FM.call"}, {"color": "#00BBF9", "font": {"color": "black"}, "id": "deep_recommenders/estimator/models/feature_interaction/fm.py:fm", "label": "fm", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e deep_recommenders/estimator/models/feature_interaction/fm.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e fm"}, {"color": "#00F5D4", "font": {"color": "black"}, "id": "deep_recommenders/estimator/models/ranking/fnn.py:FNN.call", "label": "FNN.call", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e deep_recommenders/estimator/models/ranking/fnn.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e FNN.call"}, {"color": "#FEE440", "font": {"color": "black"}, "id": "deep_recommenders/estimator/models/feature_interaction/dnn.py:dnn", "label": "dnn", "shape": "dot", "size": 18, "title": "\u003cb\u003eFile:\u003c/b\u003e deep_recommenders/estimator/models/feature_interaction/dnn.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e dnn"}, {"color": "#FF7D00", "font": {"color": "black"}, "id": "deep_recommenders/estimator/models/ranking/wide_and_deep.py:WDL.call", "label": "WDL.call", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e deep_recommenders/estimator/models/ranking/wide_and_deep.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e WDL.call"}, {"color": "#FF006E", "font": {"color": "black"}, "id": "deep_recommenders/estimator/models/ranking/deepfm.py:DeepFM.call", "label": "DeepFM.call", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e deep_recommenders/estimator/models/ranking/deepfm.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e DeepFM.call"}, {"color": "#EF476F", "font": {"color": "black"}, "id": "deep_recommenders/datasets/movielens.py:serialize_tfrecords", "label": "serialize_tfrecords", "shape": "dot", "size": 22, "title": "\u003cb\u003eFile:\u003c/b\u003e deep_recommenders/datasets/movielens.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e serialize_tfrecords"}, {"color": "#EF476F", "font": {"color": "black"}, "id": "deep_recommenders/datasets/movielens.py:_download_and_unzip", "label": "_download_and_unzip", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e deep_recommenders/datasets/movielens.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e _download_and_unzip"}, {"color": "#EF476F", "font": {"color": "black"}, "id": "deep_recommenders/datasets/movielens.py:_load_data", "label": "_load_data", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e deep_recommenders/datasets/movielens.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e _load_data"}, {"color": "#EF476F", "font": {"color": "black"}, "id": "deep_recommenders/datasets/movielens.py:_shuffle_data", "label": "_shuffle_data", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e deep_recommenders/datasets/movielens.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e _shuffle_data"}, {"color": "#EF476F", "font": {"color": "black"}, "id": "deep_recommenders/datasets/movielens.py:_serialize_example", "label": "_serialize_example", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e deep_recommenders/datasets/movielens.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e _serialize_example"}, {"color": "#EF476F", "font": {"color": "black"}, "id": "deep_recommenders/datasets/movielens.py:\u003cmodule\u003e", "label": "\u003cmodule\u003e", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e deep_recommenders/datasets/movielens.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e \u003cmodule\u003e"}, {"color": "#06D6A0", "font": {"color": "black"}, "id": "deep_recommenders/datasets/synthetic_for_multi_task.py:SyntheticForMultiTask.input_fn", "label": "SyntheticForMultiTask.input_fn", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e deep_recommenders/datasets/synthetic_for_multi_task.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e SyntheticForMultiTask.input_fn"}, {"color": "#06D6A0", "font": {"color": "black"}, "id": "deep_recommenders/datasets/synthetic_for_multi_task.py:synthetic_data", "label": "synthetic_data", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e deep_recommenders/datasets/synthetic_for_multi_task.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e synthetic_data"}]);
+                  edges = new vis.DataSet([{"arrows": "to", "color": "#666666", "from": "examples/train_fnn_on_movielens_estimator.py:model_fn", "to": "examples/train_fnn_on_movielens_estimator.py:build_columns", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "examples/train_fnn_on_movielens_estimator.py:main", "to": "examples/train_fnn_on_movielens_estimator.py:build_estimator", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "examples/train_fnn_on_movielens_estimator.py:\u003cmodule\u003e", "to": "examples/train_fnn_on_movielens_estimator.py:main", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "examples/train_fm_on_movielens_estimator.py:model_fn", "to": "examples/train_fnn_on_movielens_estimator.py:build_columns", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "examples/train_fm_on_movielens_estimator.py:export_saved_model", "to": "examples/train_fnn_on_movielens_estimator.py:build_columns", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "examples/train_fm_on_movielens_estimator.py:main", "to": "examples/train_fnn_on_movielens_estimator.py:build_estimator", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "examples/train_fm_on_movielens_estimator.py:\u003cmodule\u003e", "to": "examples/train_fnn_on_movielens_estimator.py:main", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "examples/train_deepfm_on_movielens_keras.py:main", "to": "examples/train_fnn_on_movielens_estimator.py:build_columns", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "examples/train_deepfm_on_movielens_keras.py:\u003cmodule\u003e", "to": "examples/train_fnn_on_movielens_estimator.py:main", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "examples/train_deepfm_on_movielens_estimator.py:model_fn", "to": "examples/train_fnn_on_movielens_estimator.py:build_columns", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "examples/train_deepfm_on_movielens_estimator.py:main", "to": "examples/train_fnn_on_movielens_estimator.py:build_estimator", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "examples/train_deepfm_on_movielens_estimator.py:\u003cmodule\u003e", "to": "examples/train_fnn_on_movielens_estimator.py:main", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "examples/train_gcn_on_cora_keras.py:train_model", "to": "examples/train_gcn_on_cora_keras.py:build_model", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "examples/train_gcn_on_cora_keras.py:\u003cmodule\u003e", "to": "examples/train_gcn_on_cora_keras.py:train_model", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "examples/train_wdl_on_movielens_estimator.py:model_fn", "to": "examples/train_fnn_on_movielens_estimator.py:build_columns", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "examples/train_wdl_on_movielens_estimator.py:model_fn", "to": "examples/train_wdl_on_movielens_estimator.py:cross_product_transformation", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "examples/train_wdl_on_movielens_estimator.py:main", "to": "examples/train_fnn_on_movielens_estimator.py:build_estimator", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "examples/train_wdl_on_movielens_estimator.py:\u003cmodule\u003e", "to": "examples/train_fnn_on_movielens_estimator.py:main", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "examples/train_mmoe_on_synthetic_estimator.py:model_fn", "to": "examples/train_fnn_on_movielens_estimator.py:build_columns", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "examples/train_mmoe_on_synthetic_estimator.py:main", "to": "examples/train_fnn_on_movielens_estimator.py:build_estimator", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "examples/train_mmoe_on_synthetic_estimator.py:\u003cmodule\u003e", "to": "examples/train_fnn_on_movielens_estimator.py:main", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "examples/train_transformer_on_imdb_keras.py:train_model", "to": "examples/train_transformer_on_imdb_keras.py:load_dataset", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "examples/train_transformer_on_imdb_keras.py:train_model", "to": "examples/train_gcn_on_cora_keras.py:build_model", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "examples/train_transformer_on_imdb_keras.py:\u003cmodule\u003e", "to": "examples/train_gcn_on_cora_keras.py:train_model", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "tests/keras/test_din.py:TestDIN.test_din", "to": "examples/train_gcn_on_cora_keras.py:build_model", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "tests/keras/test_fm.py:TestFM.test_model", "to": "examples/train_fnn_on_movielens_estimator.py:build_columns", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "tests/keras/test_deepfm.py:TestDeepFM.test_model_train", "to": "examples/train_fnn_on_movielens_estimator.py:build_columns", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "tests/keras/test_dcn.py:TestDCN.test_cross_full_matrix", "to": "deep_recommenders/keras/models/ranking/dcn.py:Cross", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "tests/keras/test_dcn.py:TestDCN.get_model", "to": "deep_recommenders/keras/models/ranking/dcn.py:Cross", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "tests/keras/test_xdeepfm.py:TestXDeepFM.test_invalid_inputs_type", "to": "deep_recommenders/keras/models/ranking/xdeepfm.py:CIN", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "tests/keras/test_xdeepfm.py:TestXDeepFM.test_invalid_inputs_ndim", "to": "deep_recommenders/keras/models/ranking/xdeepfm.py:CIN", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "tests/keras/test_xdeepfm.py:TestXDeepFM.test_outputs", "to": "deep_recommenders/keras/models/ranking/xdeepfm.py:CIN", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "tests/keras/test_xdeepfm.py:TestXDeepFM.test_bias", "to": "deep_recommenders/keras/models/ranking/xdeepfm.py:CIN", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "tests/keras/test_xdeepfm.py:TestXDeepFM.get_model", "to": "deep_recommenders/keras/models/ranking/xdeepfm.py:CIN", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "tests/estimator/test_mixture_of_experts.py:TestMixtureOfExperts.test_mmoe", "to": "examples/train_fnn_on_movielens_estimator.py:build_columns", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "tests/estimator/test_esmm.py:TestESMM.test_mmoe", "to": "examples/train_fnn_on_movielens_estimator.py:build_columns", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "deep_recommenders/keras/models/retrieval/factorized_top_k.py:_exclude", "to": "deep_recommenders/keras/models/retrieval/factorized_top_k.py:_take_long_axis", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "deep_recommenders/keras/models/retrieval/factorized_top_k.py:TopK.query_with_exclusions", "to": "deep_recommenders/keras/models/retrieval/factorized_top_k.py:_exclude", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "deep_recommenders/keras/models/retrieval/factorized_top_k.py:Streaming.call", "to": "deep_recommenders/keras/models/retrieval/factorized_top_k.py:_wrap_batch_too_small_error", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "deep_recommenders/keras/models/retrieval/sbcnm.py:HardNegativeMining.call", "to": "deep_recommenders/keras/models/retrieval/sbcnm.py:_gather_elements_along_row", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "deep_recommenders/estimator/models/feature_interaction/fm.py:FM.call", "to": "deep_recommenders/estimator/models/feature_interaction/fm.py:fm", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "deep_recommenders/estimator/models/ranking/fnn.py:FNN.call", "to": "deep_recommenders/estimator/models/feature_interaction/dnn.py:dnn", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "deep_recommenders/estimator/models/ranking/wide_and_deep.py:WDL.call", "to": "deep_recommenders/estimator/models/feature_interaction/dnn.py:dnn", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "deep_recommenders/estimator/models/ranking/deepfm.py:DeepFM.call", "to": "deep_recommenders/estimator/models/feature_interaction/fm.py:fm", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "deep_recommenders/estimator/models/ranking/deepfm.py:DeepFM.call", "to": "deep_recommenders/estimator/models/feature_interaction/dnn.py:dnn", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "deep_recommenders/datasets/movielens.py:serialize_tfrecords", "to": "deep_recommenders/datasets/movielens.py:_download_and_unzip", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "deep_recommenders/datasets/movielens.py:serialize_tfrecords", "to": "deep_recommenders/datasets/movielens.py:_load_data", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "deep_recommenders/datasets/movielens.py:serialize_tfrecords", "to": "deep_recommenders/datasets/movielens.py:_shuffle_data", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "deep_recommenders/datasets/movielens.py:serialize_tfrecords", "to": "deep_recommenders/datasets/movielens.py:_serialize_example", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "deep_recommenders/datasets/movielens.py:\u003cmodule\u003e", "to": "deep_recommenders/datasets/movielens.py:serialize_tfrecords", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "deep_recommenders/datasets/synthetic_for_multi_task.py:SyntheticForMultiTask.input_fn", "to": "deep_recommenders/datasets/synthetic_for_multi_task.py:synthetic_data", "width": 1.4}]);
+
+                  nodeColors = {};
+                  allNodes = nodes.get({ returnType: "Object" });
+                  for (nodeId in allNodes) {
+                    nodeColors[nodeId] = allNodes[nodeId].color;
+                  }
+                  allEdges = edges.get({ returnType: "Object" });
+                  // adding nodes and edges to the graph
+                  data = {nodes: nodes, edges: edges};
+
+                  var options = {
+    "configure": {
+        "enabled": true,
+        "filter": [
+            "physics"
+        ]
+    },
+    "edges": {
+        "color": {
+            "inherit": true
+        },
+        "smooth": {
+            "enabled": true,
+            "type": "dynamic"
+        }
+    },
+    "interaction": {
+        "dragNodes": true,
+        "hideEdgesOnDrag": false,
+        "hideNodesOnDrag": false
+    },
+    "physics": {
+        "barnesHut": {
+            "avoidOverlap": 0,
+            "centralGravity": 0.25,
+            "damping": 0.09,
+            "gravitationalConstant": -5000,
+            "springConstant": 0.02,
+            "springLength": 150
+        },
+        "enabled": true,
+        "stabilization": {
+            "enabled": true,
+            "fit": true,
+            "iterations": 1000,
+            "onlyDynamicEdges": false,
+            "updateInterval": 50
+        }
+    }
+};
+
+                  
+
+
+                  
+                  // if this network requires displaying the configure window,
+                  // put it in its div
+                  options.configure["container"] = document.getElementById("config");
+                  
+
+                  network = new vis.Network(container, data, options);
+
+                  
+
+                  
+
+                  
+
+
+                  
+
+                  return network;
+
+              }
+              drawGraph();
+        </script>
+    
+<script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+
+</body>
+</html>

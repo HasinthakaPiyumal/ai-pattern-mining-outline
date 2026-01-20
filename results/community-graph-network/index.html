@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Repository List</title>
+    <style>
+        :root{
+            --bg:#0f1724; --card:#0b1220; --muted:#9aa4b2; --accent:#38bdf8;
+            --radius:10px; --gap:12px; font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+        }
+        html,body{height:100%; margin:0; background:linear-gradient(180deg,#061028 0%, #081427 100%); color:#e6eef6}
+        .wrap{max-width:980px; margin:28px auto; padding:20px; background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent); border-radius:12px; box-shadow:0 6px 30px rgba(2,6,23,0.6)}
+        header{display:flex; gap:12px; align-items:center; margin-bottom:18px}
+        h1{font-size:18px; margin:0 4px 0 0}
+        .controls{margin-left:auto; display:flex; gap:8px; align-items:center}
+        input[type="search"]{background:transparent; border:1px solid rgba(255,255,255,0.06); color:var(--muted); padding:8px 10px; border-radius:8px; min-width:220px}
+        select{background:transparent; color:var(--muted); padding:8px; border-radius:8px; border:1px solid rgba(255,255,255,0.06)}
+        .list{display:grid; gap:10px; margin-top:12px}
+        .repo{display:flex; gap:12px; align-items:flex-start; padding:12px; background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:10px; border:1px solid rgba(255,255,255,0.03)}
+        .meta{flex:1}
+        .title{display:flex; gap:8px; align-items:center; margin-bottom:6px}
+        .title a{color:#e6f8ff; font-weight:600; text-decoration:none; font-size:15px}
+        .title a:hover{text-decoration:underline}
+        .badge{background:rgba(56,189,248,0.12); color:var(--accent); padding:4px 8px; border-radius:999px; font-size:12px}
+        .desc{color:var(--muted); font-size:13px; margin-bottom:8px}
+        .meta-row{display:flex; gap:12px; align-items:center; color:var(--muted); font-size:12px}
+        .lang-dot{width:10px; height:10px; border-radius:50%}
+        .empty{padding:18px; color:var(--muted); text-align:center}
+        .section-title{font-size:16px; margin:24px 0 8px; font-weight:600; color:#f0f6ff}
+        @media (max-width:560px){
+            header{flex-direction:column; align-items:flex-start; gap:8px}
+            .controls{width:100%; justify-content:space-between}
+            .title a{font-size:14px}
+        }
+    </style>
+</head>
+<body>
+    <main class="wrap" id="app">
+
+        <h2 class="section-title">Network Graphs</h2>
+        <section class="list" id="folders-list" aria-live="polite">
+            <!-- GitHub folders injected here -->
+        </section>
+        <div class="empty" id="folders-empty">Loading…</div>
+
+        <h2 class="section-title">Sample Repositories</h2>
+        <section class="list" id="list" aria-live="polite">
+            <!-- repo items injected here -->
+        </section>
+
+        <div class="empty" id="empty" hidden>No repositories found.</div>
+    </main>
+
+    <script>
+
+        const GITHUB_CONTENTS_URL = "https://api.github.com/repos/HasinthakaPiyumal/Pattern-Extraction---From-Repos---AST-Practice/contents/experiments/python/result/graph-network?ref=main";
+
+        // Utilities
+        const toDate = s => new Date(s || 0);
+        const el = id => document.getElementById(id);
+
+        function render(list) {
+            const container = el('list');
+            container.innerHTML = '';
+            el('empty').hidden = true;
+            for (const r of list) {
+                const item = document.createElement('article');
+                item.className = 'repo';
+                item.innerHTML = `
+                    <div class="meta">
+                        <div class="title">
+                            <a href="${escapeHtml(r.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(r.name)}</a>
+                            <span class="badge">${r.stars ?? 0} ★</span>
+                        </div>
+                        <div class="desc">${escapeHtml(r.description || '')}</div>
+                        <div class="meta-row">
+                            <span style="display:inline-flex;align-items:center;gap:8px">
+                                <span class="lang-dot" style="background:${escapeHtml(r.color || '#999')}"></span>
+                                <span>${escapeHtml(r.language || '—')}</span>
+                            </span>
+                            <span>Updated ${timeAgo(r.updated)}</span>
+                            <a href="${escapeHtml(r.url)}" target="_blank" rel="noopener noreferrer" style="margin-left:auto;color:var(--muted);text-decoration:none">Open</a>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(item);
+            }
+        }
+
+        const repos = {'multi-class-text-classification-cnn.html': 'https://github.com/jiegzhan/multi-class-text-classification-cnn',
+ 'jodie.html': 'https://github.com/claws-lab/jodie',
+ 'ArxivDigest.html': 'https://github.com/AutoLLM/ArxivDigest',
+ 'FinceptTerminal.html': 'https://github.com/Fincept-Corporation/FinceptTerminal',
+ 'pytorch_RVAE.html': 'https://github.com/kefirski/pytorch_RVAE',
+ 'Stride-AI-Agents.html': 'https://github.com/joshpocock/Stride-AI-Agents',
+ 'adaptive-classifier.html': 'https://github.com/codelion/adaptive-classifier',
+ 'pomdp-baselines.html': 'https://github.com/twni2016/pomdp-baselines',
+ 'mexican-government-report.html': 'https://github.com/PhantomInsights/mexican-government-report',
+ 'chipper.html': 'https://github.com/TilmanGriesel/chipper',
+ 'Social-Distancing-Analyser-COVID-19.html': 'https://github.com/Ank-Cha/Social-Distancing-Analyser-COVID-19',
+ 'computer-agent.html': 'https://github.com/suitedaces/computer-agent',
+ 'crafter.html': 'https://github.com/danijar/crafter',
+ 'tf.gans-comparison.html': 'https://github.com/khanrc/tf.gans-comparison',
+ 'DI-sheep.html': 'https://github.com/opendilab/DI-sheep',
+ 'GoBigger.html': 'https://github.com/opendilab/GoBigger',
+ 'VectorizedMultiAgentSimulator.html': 'https://github.com/proroklab/VectorizedMultiAgentSimulator',
+ 'clai.html': 'https://github.com/IBM/clai',
+ 'Reinforcement_Learning_in_Python.html': 'https://github.com/sichkar-valentyn/Reinforcement_Learning_in_Python',
+ 'build_MiniLLM_from_scratch.html': 'https://github.com/Tongjilibo/build_MiniLLM_from_scratch',
+ 'drl_grasping.html': 'https://github.com/AndrejOrsula/drl_grasping',
+ 'monkey-net.html': 'https://github.com/AliaksandrSiarohin/monkey-net',
+ 'Autonomous-Driving-in-Carla-using-Deep-Reinforcement-Learning.html': 'https://github.com/idreesshaikh/Autonomous-Driving-in-Carla-using-Deep-Reinforcement-Learning',
+ 'MIRNetv2.html': 'https://github.com/swz30/MIRNetv2',
+ 'ChatSim.html': 'https://github.com/yifanlu0227/ChatSim',
+ 'mahalanobis_3d_multi_object_tracking.html': 'https://github.com/eddyhkchiu/mahalanobis_3d_multi_object_tracking',
+ 'YOLO3D.html': 'https://github.com/ruhyadi/YOLO3D',
+ 'v2x-vit.html': 'https://github.com/DerrickXuNu/v2x-vit',
+ '3DOD_thesis.html': 'https://github.com/fregu856/3DOD_thesis',
+ 'vigil-llm.html': 'https://github.com/deadbits/vigil-llm',
+ 'HackBot.html': 'https://github.com/morpheuslord/HackBot',
+ 'ai-goat.html': 'https://github.com/dhammon/ai-goat',
+ 'CAAFE.html': 'https://github.com/noahho/CAAFE',
+ 'DeepLearning-IDS.html': 'https://github.com/Colorado-Mesa-University-Cybersecurity/DeepLearning-IDS',
+ 'ladi-vton.html': 'https://github.com/miccunifi/ladi-vton',
+ 'WebShop.html': 'https://github.com/princeton-nlp/WebShop',
+ 'tf.fashionAI.html': 'https://github.com/HiKapok/tf.fashionAI',
+ 'deep_recommenders.html': 'https://github.com/LongmaoTeamTf/deep_recommenders',
+ 'viral-clips-crew.html': 'https://github.com/alexfazio/viral-clips-crew',
+ 'Styleformer.html': 'https://github.com/PrithivirajDamodaran/Styleformer',
+ 'SimBiber.html': 'https://github.com/MLNLP-World/SimBiber',
+ 'customizable-gpt-chatbot.html': 'https://github.com/shamspias/customizable-gpt-chatbot',
+ 'Aliens_eye.html': 'https://github.com/arxhr007/Aliens_eye',
+ 'DLTA-AI.html': 'https://github.com/0ssamaak0/DLTA-AI',
+ 'MassGen.html': 'https://github.com/Leezekun/MassGen',
+ 'PentestAgent.html': 'https://github.com/GH05TCREW/PentestAgent',
+ 'RLMRec.html': 'https://github.com/HKUDS/RLMRec',
+ 'PointTransformerV2.html': 'https://github.com/Pointcept/PointTransformerV2',
+ 'OpenLearning4DeepRecsys.html': 'https://github.com/Leavingseason/OpenLearning4DeepRecsys',
+ 'AIlice.html': 'https://github.com/myshell-ai/AIlice',
+ 'FuxiCTR.html': 'https://github.com/reczoo/FuxiCTR',
+ 'transfuser.html': 'https://github.com/autonomousvision/transfuser',
+ 'EvoAgentX.html': 'https://github.com/EvoAgentX/EvoAgentX',
+ 'surpriver.html': 'https://github.com/tradytics/surpriver',
+ 'CyberScraper-2077.html': 'https://github.com/itsOwen/CyberScraper-2077',
+ 'oasis.html': 'https://github.com/camel-ai/oasis',
+ 'torchio.html': 'https://github.com/TorchIO-project/torchio',
+ 'scattertext.html': 'https://github.com/JasonKessler/scattertext',
+ 'synthetic-data-generator.html': 'https://github.com/hitsz-ids/synthetic-data-generator',
+ 'HuixiangDou.html': 'https://github.com/InternLM/HuixiangDou',
+ 'evadb.html': 'https://github.com/georgia-tech-db/evadb',
+ 'pybroker.html': 'https://github.com/edtechre/pybroker',
+ 'AgentBench.html': 'https://github.com/THUDM/AgentBench',
+ 'semantic-router.html': 'https://github.com/aurelio-labs/semantic-router',
+ 'dalle-flow.html': 'https://github.com/jina-ai/dalle-flow',
+ 'Automatic_Speech_Recognition.html': 'https://github.com/zzw922cn/Automatic_Speech_Recognition',
+ 'MiniMax-M1.html': 'https://github.com/MiniMax-AI/MiniMax-M1',
+ 'optillm.html': 'https://github.com/codelion/optillm',
+ 'mAP.html': 'https://github.com/Cartucho/mAP',
+ 'DRL-Pytorch.html': 'https://github.com/XinJingHao/DRL-Pytorch',
+ 'GPT_Vuln-analyzer.html': 'https://github.com/morpheuslord/GPT_Vuln-analyzer',
+ 'Octopii.html': 'https://github.com/redhuntlabs/Octopii',
+ 'Network-Intrusion-Detection.html': 'https://github.com/vinayakumarr/Network-Intrusion-Detection',
+ 'nuplan-devkit.html': 'https://github.com/motional/nuplan-devkit',
+ 'BruteForceAI.html': 'https://github.com/MorDavid/BruteForceAI',
+ 'sumo-rl.html': 'https://github.com/LucasAlegre/sumo-rl'};
+
+        async function loadGithubFolders() {
+            const container = el('folders-list');
+            const emptyState = el('folders-empty');
+            if (!container || !emptyState) {
+                return;
+            }
+
+            container.innerHTML = '';
+            emptyState.hidden = false;
+            emptyState.textContent = 'Loading…';
+
+            try {
+                const response = await fetch(GITHUB_CONTENTS_URL, {
+                    headers: {
+                        Accept: 'application/vnd.github+json'
+                    }
+                });
+                if (!response.ok) {
+                    throw new Error(`GitHub API error: ${response.status}`);
+                }
+
+                const entries = await response.json();
+                const directories = entries.filter(item => item.type === 'dir');
+                const listing = directories.length ? directories : entries.filter(item => item.type === 'file');
+                const usingFiles = !directories.length;
+
+                container.innerHTML = '';
+
+                if (!listing.length) {
+                    emptyState.hidden = false;
+                    emptyState.textContent = 'No items found in GitHub folder.';
+                    return;
+                }
+
+                if (usingFiles) {
+                    emptyState.hidden = false;
+                    emptyState.textContent = 'No subfolders detected; showing files instead.';
+                } else {
+                    emptyState.hidden = true;
+                }
+
+                for (const entry of listing) {
+                    const displayName = entry.name.replace(/\/$/, '');
+                    const href = entry.html_url;
+                    const badgeLabel = entry.type === 'dir' ? 'folder' : 'file';
+                    const description = entry.type === 'dir'
+                        ? 'GitHub directory'
+                        : 'File shown because no folders were found.';
+                    let relativePath = entry.path.replace('experiments/python/result/graph-network/', '');
+                    console.log(relativePath)
+                    relativePath = relativePath.replace("https://github.com/HasinthakaPiyumal/Pattern-Extraction---From-Repos---AST-Practice/blob/main","https://raw.githubusercontent.com/HasinthakaPiyumal/Paper-Mining/main/https:/github.com/HasinthakaPiyumal/Pattern-Extraction---From-Repos---AST-Practice/tree/main")
+                    const article = document.createElement('article');
+                    article.className = 'repo';
+                    article.innerHTML = `
+                        <div class="meta">
+                            <div class="title">
+                                <a href="https://raw.githack.com/HasinthakaPiyumal/Pattern-Extraction---From-Repos---AST-Practice/main/experiments/python/result/graph-network/${escapeHtml(relativePath)}" target="_blank" rel="noopener noreferrer">${escapeHtml(displayName)}</a>
+                            </div>
+                            <div class="meta-row">
+                                <span>${escapeHtml(relativePath)}</span>
+                                <a href="${repos[relativePath]}" target="_blank" rel="noopener noreferrer" style="margin-left:auto;color:var(--muted);text-decoration:none">Open Repo</a>
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(article);
+                }
+            } catch (error) {
+                console.error(error);
+                container.innerHTML = '';
+                emptyState.hidden = false;
+                emptyState.textContent = 'Unable to load GitHub items.';
+            }
+        }
+
+        // Very small HTML escape for user-supplied strings
+        function escapeHtml(s) {
+            return String(s || '')
+                .replaceAll('&','&amp;')
+                .replaceAll('<','&lt;')
+                .replaceAll('>','&gt;')
+                .replaceAll('"','&quot;')
+                .replaceAll("'",'&#39;');
+        }
+
+        // Simple debounce
+        function debounce(fn, wait=200){
+            let t;
+            return (...args)=>{ clearTimeout(t); t = setTimeout(()=>fn(...args), wait); };
+        }
+
+        // Initial render
+        // update();
+    loadGithubFolders();
+
+        // Optionally: load JSON from same folder (repos.json) if present.
+        // fetch('repos.json').then(r=>r.ok? r.json(): null).then(j=>{ if(Array.isArray(j)) { repos.length=0; repos.push(...j); update(); } }).catch(()=>{});
+    </script>
+</body>
+</html>

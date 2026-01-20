@@ -1,0 +1,181 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        
+            
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/dist/vis-network.min.css" integrity="sha512-WgxfT5LWjfszlPHXRmBWHkV2eceiWTOBvrKCNbdgDYTHrT2AeLCGbF4sZlZw3UMN3WtL0tGUoIAKsu8mllg/XA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js" integrity="sha512-LnvoEWDFrqGHlHmDD2101OrLcbsfkrzoSpvtSQtxK3RMnRV0eOkhhBN2dXHKRrUU8p2DGRTk35n4O8nWSVe1mQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+        
+<center>
+<h1></h1>
+</center>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6"
+          crossorigin="anonymous"
+        />
+        <script
+          src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
+          crossorigin="anonymous"
+        ></script>
+
+
+        <center>
+          <h1></h1>
+        </center>
+        <style type="text/css">
+
+             #mynetwork {
+                 width: 100%;
+                 height: 100vh;
+                 background-color: #FFFFFF;
+                 border: 1px solid lightgray;
+                 position: relative;
+                 float: left;
+             }
+
+             
+
+             
+             #config {
+                 float: left;
+                 width: 400px;
+                 height: 600px;
+             }
+             
+
+             
+        </style>
+    </head>
+
+
+    <body>
+        <div class="card" style="width: 100%">
+            
+            
+            <div id="mynetwork" class="card-body"></div>
+        </div>
+
+        
+        
+            <div id="config"></div>
+        
+
+        <script type="text/javascript">
+
+              // initialize global variables.
+              var edges;
+              var nodes;
+              var allNodes;
+              var allEdges;
+              var nodeColors;
+              var originalNodes;
+              var network;
+              var container;
+              var options, data;
+              var filter = {
+                  item : '',
+                  property : '',
+                  value : []
+              };
+
+              
+
+              
+
+              // This method is responsible for drawing the graph, returns the drawn network
+              function drawGraph() {
+                  var container = document.getElementById('mynetwork');
+
+                  
+
+                  // parsing and collecting nodes and edges from the python
+                  nodes = new vis.DataSet([{"color": "#EF476F", "font": {"color": "black"}, "id": "scripts/generate_features_script.py:generate_and_save_feats", "label": "generate_and_save_feats", "shape": "dot", "size": 18, "title": "\u003cb\u003eFile:\u003c/b\u003e scripts/generate_features_script.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e generate_and_save_feats"}, {"color": "#06D6A0", "font": {"color": "black"}, "id": "caafe/data.py:get_data_split", "label": "get_data_split", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e caafe/data.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e get_data_split"}, {"color": "#118AB2", "font": {"color": "black"}, "id": "caafe/caafe.py:generate_features", "label": "generate_features", "shape": "dot", "size": 24, "title": "\u003cb\u003eFile:\u003c/b\u003e caafe/caafe.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e generate_features"}, {"color": "#EF476F", "font": {"color": "black"}, "id": "scripts/generate_features_script.py:\u003cmodule\u003e", "label": "\u003cmodule\u003e", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e scripts/generate_features_script.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e \u003cmodule\u003e"}, {"color": "#06D6A0", "font": {"color": "black"}, "id": "caafe/data.py:load_all_data", "label": "load_all_data", "shape": "dot", "size": 18, "title": "\u003cb\u003eFile:\u003c/b\u003e caafe/data.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e load_all_data"}, {"color": "#FFD166", "font": {"color": "black"}, "id": "caafe/evaluate.py:evaluate_dataset_with_and_without_cafe", "label": "evaluate_dataset_with_and_without_cafe", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e caafe/evaluate.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e evaluate_dataset_with_and_without_cafe"}, {"color": "#FFD166", "font": {"color": "black"}, "id": "caafe/evaluate.py:evaluate_dataset_helper_extend_df", "label": "evaluate_dataset_helper_extend_df", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e caafe/evaluate.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e evaluate_dataset_helper_extend_df"}, {"color": "#118AB2", "font": {"color": "black"}, "id": "caafe/caafe.py:build_prompt_from_df", "label": "build_prompt_from_df", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e caafe/caafe.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e build_prompt_from_df"}, {"color": "#118AB2", "font": {"color": "black"}, "id": "caafe/caafe.py:get_prompt", "label": "get_prompt", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e caafe/caafe.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e get_prompt"}, {"color": "#118AB2", "font": {"color": "black"}, "id": "caafe/caafe.py:execute_and_evaluate_code_block", "label": "execute_and_evaluate_code_block", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e caafe/caafe.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e execute_and_evaluate_code_block"}, {"color": "#118AB2", "font": {"color": "black"}, "id": "caafe/caafe.py:format_for_display", "label": "format_for_display", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e caafe/caafe.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e format_for_display"}, {"color": "#118AB2", "font": {"color": "black"}, "id": "caafe/caafe.py:generate_code", "label": "generate_code", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e caafe/caafe.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e generate_code"}, {"color": "#073B4C", "font": {"color": "black"}, "id": "caafe/preprocessing.py:make_dataset_numeric", "label": "make_dataset_numeric", "shape": "dot", "size": 20, "title": "\u003cb\u003eFile:\u003c/b\u003e caafe/preprocessing.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e make_dataset_numeric"}, {"color": "#073B4C", "font": {"color": "black"}, "id": "caafe/preprocessing.py:convert_categorical_to_integer_f", "label": "convert_categorical_to_integer_f", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e caafe/preprocessing.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e convert_categorical_to_integer_f"}, {"color": "#073B4C", "font": {"color": "black"}, "id": "caafe/preprocessing.py:make_datasets_numeric", "label": "make_datasets_numeric", "shape": "dot", "size": 20, "title": "\u003cb\u003eFile:\u003c/b\u003e caafe/preprocessing.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e make_datasets_numeric"}, {"color": "#073B4C", "font": {"color": "black"}, "id": "caafe/preprocessing.py:create_mappings", "label": "create_mappings", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e caafe/preprocessing.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e create_mappings"}, {"color": "#06D6A0", "font": {"color": "black"}, "id": "caafe/data.py:load_openml_list", "label": "load_openml_list", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e caafe/data.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e load_openml_list"}, {"color": "#06D6A0", "font": {"color": "black"}, "id": "caafe/data.py:get_openml_classification", "label": "get_openml_classification", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e caafe/data.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e get_openml_classification"}, {"color": "#06D6A0", "font": {"color": "black"}, "id": "caafe/data.py:get_df", "label": "get_df", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e caafe/data.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e get_df"}, {"color": "#06D6A0", "font": {"color": "black"}, "id": "caafe/data.py:load_kaggle", "label": "load_kaggle", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e caafe/data.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e load_kaggle"}, {"color": "#9B5DE5", "font": {"color": "black"}, "id": "caafe/run_llm_code.py:check_ast", "label": "check_ast", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e caafe/run_llm_code.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e check_ast"}, {"color": "#F15BB5", "font": {"color": "black"}, "id": "caafe/plotting.py:draw_stripplot", "label": "draw_stripplot", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e caafe/plotting.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e draw_stripplot"}, {"color": "#F15BB5", "font": {"color": "black"}, "id": "caafe/plotting.py:set_scales", "label": "set_scales", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e caafe/plotting.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e set_scales"}, {"color": "#F15BB5", "font": {"color": "black"}, "id": "caafe/plotting.py:set_labels", "label": "set_labels", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e caafe/plotting.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e set_labels"}, {"color": "#00BBF9", "font": {"color": "black"}, "id": "caafe/sklearn_wrapper.py:CAAFEClassifier.fit", "label": "CAAFEClassifier.fit", "shape": "dot", "size": 20, "title": "\u003cb\u003eFile:\u003c/b\u003e caafe/sklearn_wrapper.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e CAAFEClassifier.fit"}, {"color": "#9B5DE5", "font": {"color": "black"}, "id": "caafe/run_llm_code.py:run_llm_code", "label": "run_llm_code", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e caafe/run_llm_code.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e run_llm_code"}, {"color": "#073B4C", "font": {"color": "black"}, "id": "caafe/preprocessing.py:split_target_column", "label": "split_target_column", "shape": "dot", "size": 16, "title": "\u003cb\u003eFile:\u003c/b\u003e caafe/preprocessing.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e split_target_column"}, {"color": "#00BBF9", "font": {"color": "black"}, "id": "caafe/sklearn_wrapper.py:CAAFEClassifier.predict_preprocess", "label": "CAAFEClassifier.predict_preprocess", "shape": "dot", "size": 18, "title": "\u003cb\u003eFile:\u003c/b\u003e caafe/sklearn_wrapper.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e CAAFEClassifier.predict_preprocess"}, {"color": "#00F5D4", "font": {"color": "black"}, "id": "caafe/caafe_evaluate.py:evaluate_dataset", "label": "evaluate_dataset", "shape": "dot", "size": 20, "title": "\u003cb\u003eFile:\u003c/b\u003e caafe/caafe_evaluate.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e evaluate_dataset"}, {"color": "#06D6A0", "font": {"color": "black"}, "id": "caafe/data.py:get_X_y", "label": "get_X_y", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e caafe/data.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e get_X_y"}, {"color": "#00F5D4", "font": {"color": "black"}, "id": "caafe/caafe_evaluate.py:get_leave_one_out_importance", "label": "get_leave_one_out_importance", "shape": "dot", "size": 14, "title": "\u003cb\u003eFile:\u003c/b\u003e caafe/caafe_evaluate.py\u003cbr\u003e\u003cb\u003eFunction:\u003c/b\u003e get_leave_one_out_importance"}]);
+                  edges = new vis.DataSet([{"arrows": "to", "color": "#666666", "from": "scripts/generate_features_script.py:generate_and_save_feats", "to": "caafe/data.py:get_data_split", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "scripts/generate_features_script.py:generate_and_save_feats", "to": "caafe/caafe.py:generate_features", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "caafe/data.py:get_data_split", "to": "caafe/data.py:get_df", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "caafe/caafe.py:generate_features", "to": "caafe/caafe.py:build_prompt_from_df", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "caafe/caafe.py:generate_features", "to": "caafe/caafe.py:generate_code", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "caafe/caafe.py:generate_features", "to": "caafe/caafe.py:execute_and_evaluate_code_block", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "caafe/caafe.py:generate_features", "to": "caafe/caafe.py:format_for_display", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "scripts/generate_features_script.py:\u003cmodule\u003e", "to": "caafe/data.py:load_all_data", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "scripts/generate_features_script.py:\u003cmodule\u003e", "to": "scripts/generate_features_script.py:generate_and_save_feats", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "caafe/data.py:load_all_data", "to": "caafe/data.py:load_openml_list", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "caafe/data.py:load_all_data", "to": "caafe/data.py:load_kaggle", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "caafe/evaluate.py:evaluate_dataset_with_and_without_cafe", "to": "caafe/evaluate.py:evaluate_dataset_helper_extend_df", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "caafe/caafe.py:build_prompt_from_df", "to": "caafe/caafe.py:get_prompt", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "caafe/caafe.py:execute_and_evaluate_code_block", "to": "caafe/caafe.py:format_for_display", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "caafe/preprocessing.py:make_dataset_numeric", "to": "caafe/preprocessing.py:convert_categorical_to_integer_f", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "caafe/preprocessing.py:make_datasets_numeric", "to": "caafe/preprocessing.py:create_mappings", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "caafe/preprocessing.py:make_datasets_numeric", "to": "caafe/preprocessing.py:make_dataset_numeric", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "caafe/data.py:load_openml_list", "to": "caafe/data.py:get_openml_classification", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "caafe/run_llm_code.py:check_ast", "to": "caafe/run_llm_code.py:check_ast", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "caafe/plotting.py:draw_stripplot", "to": "caafe/plotting.py:set_scales", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "caafe/plotting.py:draw_stripplot", "to": "caafe/plotting.py:set_labels", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "caafe/sklearn_wrapper.py:CAAFEClassifier.fit", "to": "caafe/caafe.py:generate_features", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "caafe/sklearn_wrapper.py:CAAFEClassifier.fit", "to": "caafe/run_llm_code.py:run_llm_code", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "caafe/sklearn_wrapper.py:CAAFEClassifier.fit", "to": "caafe/preprocessing.py:make_datasets_numeric", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "caafe/sklearn_wrapper.py:CAAFEClassifier.fit", "to": "caafe/preprocessing.py:split_target_column", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "caafe/sklearn_wrapper.py:CAAFEClassifier.predict_preprocess", "to": "caafe/preprocessing.py:split_target_column", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "caafe/sklearn_wrapper.py:CAAFEClassifier.predict_preprocess", "to": "caafe/run_llm_code.py:run_llm_code", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "caafe/sklearn_wrapper.py:CAAFEClassifier.predict_preprocess", "to": "caafe/preprocessing.py:make_dataset_numeric", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "caafe/caafe_evaluate.py:evaluate_dataset", "to": "caafe/preprocessing.py:make_datasets_numeric", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "caafe/caafe_evaluate.py:evaluate_dataset", "to": "caafe/preprocessing.py:make_dataset_numeric", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "caafe/caafe_evaluate.py:evaluate_dataset", "to": "caafe/data.py:get_X_y", "width": 1.4}, {"arrows": "to", "color": "#666666", "from": "caafe/caafe_evaluate.py:get_leave_one_out_importance", "to": "caafe/caafe_evaluate.py:evaluate_dataset", "width": 1.4}]);
+
+                  nodeColors = {};
+                  allNodes = nodes.get({ returnType: "Object" });
+                  for (nodeId in allNodes) {
+                    nodeColors[nodeId] = allNodes[nodeId].color;
+                  }
+                  allEdges = edges.get({ returnType: "Object" });
+                  // adding nodes and edges to the graph
+                  data = {nodes: nodes, edges: edges};
+
+                  var options = {
+    "configure": {
+        "enabled": true,
+        "filter": [
+            "physics"
+        ]
+    },
+    "edges": {
+        "color": {
+            "inherit": true
+        },
+        "smooth": {
+            "enabled": true,
+            "type": "dynamic"
+        }
+    },
+    "interaction": {
+        "dragNodes": true,
+        "hideEdgesOnDrag": false,
+        "hideNodesOnDrag": false
+    },
+    "physics": {
+        "barnesHut": {
+            "avoidOverlap": 0,
+            "centralGravity": 0.25,
+            "damping": 0.09,
+            "gravitationalConstant": -5000,
+            "springConstant": 0.02,
+            "springLength": 150
+        },
+        "enabled": true,
+        "stabilization": {
+            "enabled": true,
+            "fit": true,
+            "iterations": 1000,
+            "onlyDynamicEdges": false,
+            "updateInterval": 50
+        }
+    }
+};
+
+                  
+
+
+                  
+                  // if this network requires displaying the configure window,
+                  // put it in its div
+                  options.configure["container"] = document.getElementById("config");
+                  
+
+                  network = new vis.Network(container, data, options);
+
+                  
+
+                  
+
+                  
+
+
+                  
+
+                  return network;
+
+              }
+              drawGraph();
+        </script>
+    
+<script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+
+</body>
+</html>
