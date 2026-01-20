@@ -1,5 +1,34 @@
 [
     {
+        "short_name": "Advanced LLM Prompting",
+        "l2_patterns": [
+            "Emotion Prompting",
+            "Iterative Prompting (for MT)",
+            "Translate First Prompting",
+            "Dictionary-based Prompting for Machine Translation (DiPMT)",
+            "Decomposed Prompting for MT (DecoMT)",
+            "InteractiveChainPrompting (ICP)",
+            "ChainofDictionary (CoD)",
+            "PARC Prompts Augmented by Retrieval Cross-lingually",
+            "Multi-Aspect Prompting and Selection (MAPS)",
+            "Vanilla Prompting (for bias mitigation)",
+            "Template-Based Prompting for Controlled Generation",
+            "Self-Generated InContext Learning (SGICL)",
+            "Role Prompting",
+            "Automatic Prompt Engineer (APE)",
+            "Style Prompting",
+            "ZeroShot Prompting",
+            "FewShot Prompting",
+            "Rereading (RE2)",
+            "Meta Prompting",
+            "Prompt Mining",
+            "Metacognitive Prompting",
+            "Prompt Chain",
+            "Prompt Paraphrasing",
+            "XInSTA Prompting"
+        ]
+    },
+    {
         "short_name": "LLM-based Multimodal Generative Prompting",
         "l2_patterns": [
             "Segmentation Prompting",
@@ -112,31 +141,7 @@
             "LLM-KG Tight-Coupling Paradigm",
             "ThinkonGraph (ToG) Algorithmic Framework",
             "KG-Agent Framework (KGAgent, ThinkonGraph)",
-            "Knowledge-Driven Chain-of-Thought (KDCoT) / Retrieval-Enhanced Reasoning (RR)",
-            "Emotion Prompting",
-            "Iterative Prompting (for MT)",
-            "Translate First Prompting",
-            "Dictionary-based Prompting for Machine Translation (DiPMT)",
-            "Decomposed Prompting for MT (DecoMT)",
-            "InteractiveChainPrompting (ICP)",
-            "ChainofDictionary (CoD)",
-            "PARC Prompts Augmented by Retrieval Cross-lingually",
-            "Multi-Aspect Prompting and Selection (MAPS)",
-            "Vanilla Prompting (for bias mitigation)",
-            "Template-Based Prompting for Controlled Generation",
-            "Self-Generated InContext Learning (SGICL)",
-            "Role Prompting",
-            "Automatic Prompt Engineer (APE)",
-            "Style Prompting",
-            "ZeroShot Prompting",
-            "FewShot Prompting",
-            "Rereading (RE2)",
-            "Meta Prompting",
-            "Prompt Mining",
-            "Metacognitive Prompting",
-            "Prompt Chain",
-            "Prompt Paraphrasing",
-            "XInSTA Prompting"
+            "Knowledge-Driven Chain-of-Thought (KDCoT) / Retrieval-Enhanced Reasoning (RR)"
         ]
     },
     {

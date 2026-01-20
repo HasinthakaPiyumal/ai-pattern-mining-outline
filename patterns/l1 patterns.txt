@@ -1,3 +1,4 @@
+Advanced LLM Prompting
 Forecasting with Classical Models
 LLM-based User Intent Extraction
 LLM Fine Tunning, Training & Alignment
