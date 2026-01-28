@@ -25,7 +25,9 @@
             "Metacognitive Prompting",
             "Prompt Chain",
             "Prompt Paraphrasing",
-            "XInSTA Prompting"
+            "XInSTA Prompting",
+            "LLM Prompting & Reasoning Strategies",
+            "Agent Self-Reflection & Learning"            
         ]
     },
     {
@@ -41,7 +43,9 @@
             "ChainofImages (CoI)",
             "Duty Distinct ChainofThought (DDCoT)",
             "Multimodal Interaction Augmentation",
-            "InCLT Crosslingual Transfer Prompting"
+            "InCLT Crosslingual Transfer Prompting",
+            "Voice-to-Knowledge Documentation",
+            "Multimodal RAG Data Strategies"
         ]
     },
     {
@@ -141,7 +145,22 @@
             "LLM-KG Tight-Coupling Paradigm",
             "ThinkonGraph (ToG) Algorithmic Framework",
             "KG-Agent Framework (KGAgent, ThinkonGraph)",
-            "Knowledge-Driven Chain-of-Thought (KDCoT) / Retrieval-Enhanced Reasoning (RR)"
+            "Knowledge-Driven Chain-of-Thought (KDCoT) / Retrieval-Enhanced Reasoning (RR)",
+            "LLM Knowledge Augmentation (RAG)",
+            "Intelligent RAG Orchestration & Optimization",
+            "Graph-Enhanced Context Retrieval",
+            "AI Retrieval & Text Processing",
+            "Query & Retrieval Optimization",
+            "Basic RAG for Static Data",
+            "RAG with Conversational Memory",
+            "Natural Language Graph Query",
+            "RAG on AWS with Bedrock",
+            "Advanced RAG-ReAct Chat Assistants",
+            "Personalized & Reranked Recommendations",
+            "AI-Driven Natural Language Insights",
+            "Natural Language to Query DSL",
+            "LLM Database Interaction",
+            "Hybrid RAG Retrieval"
         ]
     },
     {
@@ -243,7 +262,10 @@
             "Uncertainty-Routed CoT Prompting",
             "Contrastive CoT Prompting",
             "MetaReasoning over Multiple CoTs",
-            "Tabular ChainofThought (TabCoT)"
+            "Tabular ChainofThought (TabCoT)",
+            "LLM Embodied Agent Planning",
+            "AI-Driven Legacy Modernization",
+            "LLM Agent Task Planning"
         ]
     },
     {
@@ -285,13 +307,15 @@
             "LLM Fallback to Inherent Knowledge",
             "Constraint-Aware API Selection",
             "Self-Instruct Finetuning for API Generation",
-            "Retriever-Aware Training (RAT)"
+            "Retriever-Aware Training (RAT)",
+            "LLM Tooling & External Actions"
         ]
     },
     {
         "short_name": "LLM-based User Intent Extraction",
         "l2_patterns": [
-            "Intent Understanding"
+            "Intent Understanding",
+            "Input Classification & Routing"
         ]
     },
     {
@@ -302,7 +326,16 @@
             "Agentic Working Memory",
             "Plug-and-Play LLM Module",
             "Plug-and-Play LLM Augmentation Framework",
-            "Cognitive Load Management"
+            "Cognitive Load Management",
+            "Intelligent Agent Core Capabilities",
+            "Agent Architectures & Collaboration",
+            "Intelligent Agent Design Patterns",
+            "Multi-Agent Collaboration & Orchestration",
+            "Mobile Agent System Patterns",
+            "Dynamic Single-Agent Orchestration",
+            "Multi-Agent Systems on Bedrock",
+            "Agentic Task Management",
+            "Continuous Feedback Loop"
         ]
     },
     {
@@ -341,7 +374,11 @@
             "Behavior Cloning for Initial Skill Acquisition",
             "Sample-Efficient RL with Reference Reuse",
             "Constitutional AI for Ethical Alignment",
-            "Efficient LLM Fine-tuning"
+            "Efficient LLM Fine-tuning",
+            "Advanced Agent Training Strategies",
+            "LLM Agents via RL Grounding",
+            "Adaptive AI System Feedback",
+            "Generative Model Fine-tuning"
         ]
     },
     {
@@ -402,7 +439,68 @@
             "Partial Dependence Plots (PDPs)",
             "DivExplorer Interactive System (Interactive Divergent Subgroup Exploration)",
             "Permutation Feature Importance",
-            "Program-Aided Language Models (PAL) Prompting"
+            "Program-Aided Language Models (PAL) Prompting",
+            "Safe, Reliable, Human-Guided AI",
+            "AI System Evaluation",
+            "End-to-End Responsible AI",
+            "Privacy-Preserving Distributed AI",
+            "AI System Performance Evaluation",
+            "Encapsulate ML with Rules",
+            "Verifiable AI Outputs",
+            "LLM Self-Correction & Refinement",
+            "Real-time AI Code Security Validation",
+            "Human-in-Loop LLM Correction",
+            "LLM External Knowledge Grounding"
         ]
-    }
+    },
+    {
+        "short_name": "Model Abstraction",
+        "l2_patterns": [
+            "Model Abstraction"
+        ]
+    },
+    {
+        "short_name": "Forecasting with Classical Models",
+        "l2_patterns": [
+            "Forecasting with Classical Models",
+            "Advanced ML Techniques & Strategies"
+        ]
+    },
+    {
+        "short_name": "Preprocessing Text and Numerical Data",
+        "l2_patterns": [
+            "Preprocessing Text and Numerical Data",
+            "AI Content Extraction & Analysis"
+        ]
+    },
+    {
+    "short_name": "MLOps",
+    "l2_patterns": [
+      "MLOps & Contextual ML Design",
+      "ML System Architecture & Operations",
+      "Robust ML System Design",
+      "ML Deployment & Data Architectures",
+      "Model Versioning & Deployment",
+      "Agent Optimization & Memory",
+      "Concurrent Task Execution",
+      "AI Production Monitoring & Evaluation",
+      "Cross-Account SageMaker Code Integration",
+      "Cold Start Forecasting with DeepAR",
+      "MLOps Automation & Integration",
+      "Bedrock Invocation Logging",
+      "Custom ML Container & Orchestration",
+      "AI EKS Access Automation",
+      "SageMaker Hydra ML Workflows",
+      "Scalable ML Data Engineering",
+      "AIML Results Web Visualization",
+      "AI for Kubernetes Management",
+      "Automated Bot Lifecycle Management",
+      "Bedrock for AWS Ops & Compliance",
+      "AI-Assisted DevSecOps Automation",
+      "AI/ML for Cloud Ops & Security",
+      "Serverless Financial Risk Calculation",
+      "AWS Glue ETL Unit Testing",
+      "Automated Cloud Migration Planning"
+    ]
+  }
 ]

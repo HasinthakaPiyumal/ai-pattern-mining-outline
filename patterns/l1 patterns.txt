@@ -4,10 +4,10 @@ LLM-based User Intent Extraction
 LLM Fine Tunning, Training & Alignment
 LLM-based Context Management
 Evaluating LLM Results
-LLM-based Multimodal Generative Prompting
+Preprocessing and Prompting Multimodal data 
 LLM-based Planning, XoT, ReAct, or Reasoning
 Model Abstraction
-Agent Architecture
+Multi Agent Architectures
 None 
 Preprocessing Text and Numerical Data
 Enabling Reliability, Explaiability, or Robustness
