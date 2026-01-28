@@ -1,21 +1,86 @@
 """Inference pipeline: load saved models and score unverified data."""
 
+from __future__ import annotations
+
 from pathlib import Path
+import json
 import joblib
 import numpy as np
 import pandas as pd
+from sklearn.preprocessing import LabelEncoder
 
-from ensemble_common import (
-    CONFIG,
-    prepare_labels,
-    get_model_classes,
-    align_probabilities,
-    resolve_weights,
-    load_and_merge_data,
-    split_verified_sets,
-    ensure_dir,
-    load_json,
-)
+
+# -------------------------- Config --------------------------
+CONFIG = {
+    "target_column": "verified_pattern",
+    "predict_mode": True,
+    "labeled_data_path": "/datasets/labeled_data.csv",
+    "embeddings_path": "/datasets/embeddings.csv",
+    "min_samples_per_class": 20,
+    "n_splits": 5,
+    "random_state": 42,
+    "none_label": "none",
+    "model_dir": "artifacts/models",
+    "output_dir": "artifacts/outputs",
+}
+
+VOTE_WEIGHTS = {"LogReg": 1.06, "SVC": 1.01, "KNN": 0.93}
+
+
+# -------------------------- Utilities --------------------------
+def ensure_dir(path: Path) -> Path:
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def load_json(path: Path):
+    with path.open("r", encoding="utf-8") as handle:
+        return json.load(handle)
+
+
+def prepare_labels(y):
+    label_encoder = LabelEncoder()
+    y_values = y.values if isinstance(y, pd.Series) else y
+    encoded = label_encoder.fit_transform(y_values)
+    return label_encoder, encoded
+
+
+def get_model_classes(fitted_model):
+    if hasattr(fitted_model, "classes_"):
+        return fitted_model.classes_
+    if hasattr(fitted_model, "steps") and fitted_model.steps:
+        return fitted_model.steps[-1][1].classes_
+    raise AttributeError("Model does not expose classes_.")
+
+
+def align_probabilities(prob_matrix, model_classes, global_classes):
+    aligned = np.zeros((prob_matrix.shape[0], len(global_classes)))
+    for class_id, class_label in enumerate(model_classes):
+        global_index = np.where(global_classes == class_label)[0][0]
+        aligned[:, global_index] = prob_matrix[:, class_id]
+    return aligned
+
+
+def resolve_weights(custom_weights=None):
+    if custom_weights is None:
+        return VOTE_WEIGHTS
+    return {**VOTE_WEIGHTS, **custom_weights}
+
+
+def load_and_merge_data(config):
+    labeled = pd.read_csv(config["labeled_data_path"])
+    embeddings = pd.read_csv(config["embeddings_path"])
+    merged = pd.merge(labeled, embeddings, on="file")
+    return merged
+
+
+def split_verified_sets(data, target_column, min_samples):
+    verified = data[~data[target_column].isna()]
+    counts = verified[target_column].value_counts()
+    keep_labels = counts[counts >= min_samples].index
+    verified_filtered = verified[verified[target_column].isin(keep_labels)]
+    unverified = data[data[target_column].isna()]
+    return verified_filtered, unverified
 
 
 def weighted_vote_predict(prob_results, label_encoder, weights):
